@@ -3,9 +3,58 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>WB Game Prototype</title>
+    <meta name="theme-color" content="#080a13" />
+    <title>WillBet Casino 2.0</title>
+    <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <h1>WB Game Prototype</h1>
+    <main class="app-shell" aria-label="WillBet Casino mobile prototype">
+      <header class="top-header">
+        <button class="brand" type="button" aria-label="WillBet home">will<span>bet</span><i>·</i></button>
+        <div class="header-actions">
+          <button class="balance" type="button" data-feedback="Wallet overview"><strong>0.50603</strong><span class="coin">₮</span><span class="chevron">⌄</span></button>
+          <button class="plus-action" type="button" data-feedback="Deposit flow"><span>＋</span></button>
+          <button class="icon-action" type="button" data-feedback="Notifications"><span>♟</span></button>
+          <button class="avatar" type="button" data-feedback="Profile"><span>W</span></button>
+        </div>
+      </header>
+
+      <section class="jackpot" aria-label="WillBet Casino Jackpot">
+        <div class="jackpot-art" aria-hidden="true"></div>
+        <div class="jackpot-copy">
+          <p class="eyebrow">✦ WILLBET CASINO JACKPOT</p>
+          <p class="jackpot-amount"><span id="jackpotAmount">42,680.38</span> <small>USDT</small></p>
+          <p class="jackpot-subtitle">Every Bet Builds the Pot</p>
+          <p class="jackpot-timer">◉ Weekly Jackpot <b>·</b> 02D 13H 42M</p>
+        </div>
+        <div class="jackpot-feed" id="jackpotFeed" aria-live="polite">✦ +2.14 USDT added to the Jackpot</div>
+      </section>
+
+      <section class="discovery-controls" aria-label="Casino search and categories">
+        <label class="search-box"><span aria-hidden="true">⌕</span><input id="searchInput" type="search" placeholder="Search games or providers" autocomplete="off" /><button id="clearSearch" class="clear-search" type="button" aria-label="Clear search">×</button></label>
+        <div class="category-row" id="categoryNav" role="tablist" aria-label="Casino categories"></div>
+      </section>
+
+      <section id="pageContent" class="page-content" aria-live="polite"></section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Primary navigation">
+      <button type="button" data-feedback="Menu"><span>☷</span><b>Menu</b></button>
+      <button class="active" type="button" data-feedback="Casino"><span>♠</span><b>Casino</b></button>
+      <button type="button" data-feedback="Sports"><span>◉</span><b>Sports</b></button>
+      <button type="button" data-feedback="My Bets"><span>▤</span><b>My Bets</b></button>
+      <button type="button" data-feedback="Rewards"><span>◌</span><b>Rewards</b></button>
+    </nav>
+
+    <div id="sheetBackdrop" class="sheet-backdrop" hidden></div>
+    <aside id="filterSheet" class="filter-sheet" aria-label="Filter games" aria-hidden="true">
+      <div class="sheet-handle"></div>
+      <div class="sheet-heading"><div><p class="eyebrow">GAME DISCOVERY</p><h2>Filter games</h2></div><button id="closeSheet" type="button" aria-label="Close filters">×</button></div>
+      <div id="filterOptions" class="filter-options"></div>
+      <div class="sheet-actions"><button id="clearFilters" class="button-quiet" type="button">Clear All</button><button id="applyFilters" class="button-primary" type="button">Apply Filters</button></div>
+    </aside>
+
+    <div id="launchToast" class="launch-toast" role="status" aria-live="polite"></div>
+    <script src="./app.js"></script>
   </body>
 </html>
