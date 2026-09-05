@@ -1,0 +1,35 @@
+/* Real game artwork sits above the existing gradient, which remains the fallback. */
+.game-card .game-cover {
+  aspect-ratio: 5 / 8;
+}
+
+.fallback-cover-title {
+  position: absolute;
+  right: 8px;
+  bottom: 10px;
+  left: 8px;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: .88;
+  letter-spacing: -.8px;
+  text-transform: uppercase;
+  text-wrap: balance;
+  text-shadow: 0 2px 12px #000;
+}
+
+.game-cover-image {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--image-position, center);
+  background: var(--cover);
+}
+
+.game-cover-image[hidden] {
+  display: none;
+}

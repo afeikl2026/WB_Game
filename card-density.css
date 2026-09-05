@@ -1,0 +1,26 @@
+:root {
+  --game-card-width: clamp(103px, 28.54vw, 107px);
+  --lobby-card-gap: 3px;
+  --category-card-gap: 6px;
+}
+
+/* Compact ordinary game rails: three full cards plus a cue for the next card. */
+.h-scroll {
+  gap: var(--lobby-card-gap);
+}
+
+.h-scroll > .game-card,
+.h-scroll > .trending-card {
+  flex-basis: var(--game-card-width);
+}
+
+/* Category results keep the same card width with slightly calmer spacing. */
+.game-grid {
+  grid-template-columns: repeat(3, var(--game-card-width));
+  column-gap: var(--category-card-gap);
+  justify-content: center;
+}
+
+.game-grid .game-card {
+  width: var(--game-card-width);
+}

@@ -41,6 +41,11 @@ const crash = makeGames('crash', 8, ['Jet Surge','Orbit Crash','Skyline Rush']);
 const table = makeGames('table', 10, ['Classic Baccarat','European Roulette','Blackjack Elite','Dragon Tiger']);
 const originals = makeGames('originals', 8, ['WillBet Dice','Purple Plinko','Neon Mines','Coin Flip']);
 const allGames = [...slots, ...live, ...poker, ...fishing, ...crash, ...table, ...originals];
+const GAME_COVER_IMAGES = Object.freeze({
+  'live-3': { image:'./assets/game-covers/platinum-blackjack.png', imagePosition:'17% center' },
+  'live-6': { image:'./assets/game-covers/gold-vault-roulette.jpg', imagePosition:'center' }
+});
+allGames.forEach(game => Object.assign(game, GAME_COVER_IMAGES[game.id] || {}));
 const recommended = [slots[2], live[0], slots[7], fishing[1], poker[2], slots[15], live[4], originals[0]];
 const trending = [live[0], live[1], live[2], slots[4], fishing[3], slots[12], live[7], poker[1]].map((g, i) => ({ ...g, isHot: true, playing: [2400,1800,987,856,744,632,502,429][i] }));
 const released = [slots[0], slots[1], live[3], poker[0], fishing[0], slots[5], live[5], originals[1]].map(g => ({ ...g, isNew: true }));
@@ -79,9 +84,9 @@ let latestWinsShiftToken = 0;
 const latestWinsShiftQueue = [];
 
 const badge = (game, type, label) => `<span class="badge ${type} shine-target" data-badge-key="${game.id}-${type}">${label}</span>`;
-const gameCard = (game, type = '', showPlaying = false) => `<button class="game-card ${type}" type="button" data-game-id="${game.id}" aria-label="Open ${game.name}">
-  <div class="game-cover" style="--cover:${game.cover}">${game.isHot ? badge(game, 'hot', 'Hot') : ''}${game.isNew ? badge(game, 'new', 'New') : ''}${game.isFavorite ? '<span class="favorite">★</span>' : ''}<span class="cover-symbol">${game.symbol}</span></div>
-  <div class="game-meta"><div class="game-name">${game.name}</div><div class="game-provider">${game.provider}</div>${showPlaying ? `<div class="play-count">${game.playing > 999 ? `${(game.playing / 1000).toFixed(1)}K Playing` : `${game.playsToday} Plays Today`}</div>` : ''}</div></button>`;
+const gameCard = (game, type = '', showPlaying = false) => `<button class="game-card ${type}" type="button" data-game-id="${game.id}" aria-label="Play ${game.name} by ${game.provider}">
+  <div class="game-cover" style="--cover:${game.cover}"><span class="fallback-cover-title" aria-hidden="true">${game.name}</span>${game.image ? `<img class="game-cover-image" src="${game.image}" alt="" loading="lazy" decoding="async" style="--image-position:${game.imagePosition || 'center'}" onerror="this.hidden=true" />` : ''}${game.isHot ? badge(game, 'hot', 'Hot') : ''}${game.isNew ? badge(game, 'new', 'New') : ''}${game.isFavorite ? '<span class="favorite">★</span>' : ''}</div>
+  ${showPlaying ? `<div class="game-meta"><div class="play-count">${game.playing > 999 ? `${(game.playing / 1000).toFixed(1)}K Playing` : `${game.playsToday} Plays Today`}</div></div>` : ''}</button>`;
 const section = (title, subtitle, games, type = '', icon = '✦', showPlaying = false) => `<section class="section"><div class="section-head"><div><h2 class="section-title"><span>${icon}</span>${title}</h2>${subtitle ? `<p class="section-subtitle">${subtitle}</p>` : ''}</div><button class="view-all" type="button" data-feedback="View all ${title}">View All ›</button></div><div class="h-scroll">${games.map(g => gameCard(g, type, showPlaying)).join('')}</div></section>`;
 const roadCard = road => { let cells = ''; road.road.forEach((col, c) => col.forEach((outcome, r) => { cells += `<span class="road-cell" style="grid-column:${c + 1};grid-row:${r + 1}"><i class="road-dot ${outcome}"></i></span>`; })); return `<article class="baccarat-road-card"><div class="road-info"><span class="dealer-chip">LIVE DEALER</span><h3 class="road-game">${road.name}</h3><p class="road-provider">${road.provider}</p><p class="road-pattern">${road.pattern}</p></div><div class="road-map" aria-label="${road.pattern} baccarat road map">${cells}</div></article>`; };
 
