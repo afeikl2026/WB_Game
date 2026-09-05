@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="./card-density.css" />
     <link rel="stylesheet" href="./game-covers.css" />
     <link rel="stylesheet" href="./provider-flow.css" />
+    <link rel="stylesheet" href="./game-detail.css" />
   </head>
   <body>
     <main class="app-shell" aria-label="WillBet Casino mobile prototype">
@@ -65,6 +66,18 @@
       <div class="sheet-heading"><div><p class="eyebrow">GAME DISCOVERY</p><h2>Filter games</h2></div><button id="closeSheet" type="button" aria-label="Close filters">×</button></div>
       <div id="filterOptions" class="filter-options"></div>
       <div class="sheet-actions"><button id="clearFilters" class="button-quiet" type="button">Clear All</button><button id="applyFilters" class="button-primary" type="button">Apply Filters</button></div>
+    </aside>
+
+    <div id="shareBackdrop" class="sheet-backdrop" hidden></div>
+    <aside id="shareSheet" class="share-sheet" aria-label="Share game" aria-hidden="true">
+      <div class="sheet-handle"></div>
+      <div class="sheet-heading"><div><p class="eyebrow">GAME LINK</p><h2>Share game</h2></div><button id="closeShareSheet" type="button" aria-label="Close share options">×</button></div>
+      <div class="share-options">
+        <button type="button" data-share-action="copy"><span>↗</span>Copy Link</button>
+        <button type="button" data-share-action="telegram"><span>◉</span>Telegram</button>
+        <button type="button" data-share-action="x"><span>𝕏</span>X</button>
+        <button type="button" data-share-action="more"><span>•••</span>More</button>
+      </div>
     </aside>
 
     <div id="launchToast" class="launch-toast" role="status" aria-live="polite"></div>

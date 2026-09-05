@@ -84,6 +84,46 @@ All requested product copy is present: Jackpot amount and feed, recommendation r
 
 passed
 
+## Game detail page — 2026-09-05
+
+### Comparison evidence
+
+- Source visual truth: `/var/folders/c9/dh3n9dbs3y1ft9hjk03qhy9h0000gn/T/codex-clipboard-7f4ce13c-7222-4944-bd7f-cf525e4ba4c7.png` (game-detail layout and information-density reference).
+- Implementation: browser-rendered `http://127.0.0.1:4176/` in the Codex in-app browser.
+- Implementation capture: `/private/tmp/wb-game-detail-375.png`.
+- Combined comparison: `/private/tmp/wb-game-detail-qa-comparison.png` (reference alongside the live WillBet detail page).
+- Viewport and normalization: the live app shell measured 375 CSS px wide. The reference was used for its compact overview structure and content order; WillBet color, typography, navigation, and CTA treatment remain intentionally distinct.
+- State: a normal JDB game detail, with RTP, volatility, currency control, tags, compact description, provider link, and related games visible.
+
+### Full-view and focused comparison
+
+- Full view: the detail route is a compact mobile continuation of the existing Casino flow. It keeps the game identity, primary Play Now action, and basic controls above the information and recommendation areas.
+- Focused region: a 116px-wide 3:4 cover, two concise stat columns, and paired CTA buttons form one overview rather than a set of oversized cards. Play Now receives the only high-contrast purple treatment.
+- Typography and spacing: the long game-name header truncates safely; tags use compact single-line pills; description starts at two lines; related games reuse the existing cover-first game cards in a horizontal rail.
+- Colors: dark-navy surfaces and controlled purple/gold highlights preserve the current WillBet system and avoid the reference product's blue CTA and page treatment.
+- Image behavior: detail covers reuse the unified `image` plus existing fallback-cover fields with `object-fit: cover`; card layout stays stable when a local cover is unavailable.
+
+### Interaction and responsive QA
+
+- Verified entry from Lobby, Slots category grid, Latest Wins, Provider Games, and the Recommended Games rail. Every route uses the same `activeGame` data source and detail renderer.
+- Favorite toggles the unified game state; Fullscreen is a persistent prototype ON/OFF switch; display currency changes between USDT, BTC, ETH, and USD without a conversion claim.
+- Share opens a functional lightweight sheet; Copy Link, Telegram, X, and More each return distinct prototype feedback. Fun Play and Play Now return distinct mock-launch feedback.
+- Provider link opened JDB Games using the existing provider flow; Provider Games Back returned to Providers. Slots → Game Detail → Back restored the Slots three-column grid. Recommended Game B → Back restored Game A.
+- Tags and description are rendered conditionally from the unified game data, with no empty sections. Description expansion toggles Show All / Show Less.
+- At the live 375px shell: overview controls, CTAs, related rail, and fixed navigation remain inside the mobile container. No document or app-shell horizontal overflow was detected. Browser console errors: none.
+
+### Comparison history
+
+1. The first browser render showed the `Jackpot` detail tag inheriting the global Jackpot card's `min-height`. The detail tag now explicitly resets that unrelated global property; the final screenshot confirms compact, inline tags.
+
+### Findings
+
+- No actionable P0, P1, or P2 differences remain. The current abstract fallback is preserved for individual games that do not yet have a local image asset; this is existing data behavior, not a detail-page layout defect.
+
+## Final result
+
+passed
+
 ## Provider discovery flow — 2026-09-05
 
 ### Comparison evidence
