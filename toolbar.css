@@ -1,0 +1,81 @@
+/* Category result-page toolbar: kept separate to avoid reformatting the existing minified stylesheet. */
+.search-toolbar {
+  display: flex;
+  width: 100%;
+}
+
+.search-toolbar .search-box {
+  width: 100%;
+}
+
+.toolbar-action {
+  display: none;
+}
+
+.discovery-controls.is-category .search-toolbar {
+  height: 48px;
+  align-items: center;
+  border: 1px solid #373142;
+  border-radius: 14px;
+  background: #15151e;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.discovery-controls.is-category .search-box {
+  height: 46px;
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+}
+
+.discovery-controls.is-category .toolbar-action {
+  position: relative;
+  display: grid;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 30px;
+  place-items: center;
+  border-left: 1px solid #353342;
+  color: #d3c8df;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.toolbar-sort select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.toolbar-action.is-active {
+  color: var(--primary);
+}
+
+.toolbar-action.is-active::after {
+  position: absolute;
+  top: 2px;
+  right: 7px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 6px #a765ed99;
+  content: "";
+}
+
+.category-page {
+  margin: 7px 0 25px;
+}
+
+.category-page .chip-row {
+  margin: 4px 0 10px;
+}
+
+.category-page .game-grid {
+  margin-top: 0;
+}
