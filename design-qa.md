@@ -84,6 +84,69 @@ All requested product copy is present: Jackpot amount and feed, recommendation r
 
 passed
 
+## Game play asset and control-icon update — 2026-09-06
+
+### Comparison evidence
+
+- Source visual truth: `/var/folders/c9/dh3n9dbs3y1ft9hjk03qhy9h0000gn/T/codex-clipboard-54a856a4-9bd8-4370-be92-554a78ea4b8f.png` (804 × 1404 px game-intro artwork), plus the supplied floating-control closed/open screenshots.
+- Implementation: browser-rendered `http://127.0.0.1:4200/` in the Codex in-app browser; closed and expanded control screenshots were captured and visually inspected during this run. The browser capture API does not expose filesystem screenshot paths.
+- Viewport normalization: the centered WillBet mobile shell was inspected at its 375px content width. The portrait source is rendered with the existing `object-fit: cover` behavior inside the unchanged Game View.
+- States: Windowed Game with the control collapsed, then the same state with the Home/Close panel expanded.
+
+### Full-view and focused comparison
+
+- The supplied red Wanted Dead or a Wild intro artwork now fills the existing game surface without changing the Windowed/Fullscreen layout or game-play state logic.
+- In its collapsed state, the control uses a dark circular outer button with a centered, light iPhone Home-style ring.
+- When the panel expands, the Home-style ring is hidden and the control swaps to a centered close `×`; the action panel and all existing placement logic remain unchanged.
+- Typography, spacing, colors, image crop, and button state were checked against the supplied references. No P0/P1/P2 mismatch remains within this narrow asset-and-icon scope.
+
+### Interaction and technical QA
+
+- The new image loaded successfully from `./assets/game-play/wanted-dead-or-a-wild-duel-intro.png`.
+- Collapsed state: Home-style icon visible and close icon hidden. Expanded state: close icon visible, Home-style icon hidden, and the Home/Close action panel remains functional.
+- Browser console errors and warnings: none.
+
+## Final result
+
+passed
+
+## Game play screen — 2026-09-06
+
+### Comparison evidence
+
+- Source visual truth: `/var/folders/c9/dh3n9dbs3y1ft9hjk03qhy9h0000gn/T/codex-clipboard-829797b2-8cec-427a-98b1-47788a111c3b.png` (722 × 1052 px supplied game artwork).
+- Implementation: browser-rendered `http://127.0.0.1:4200/` in the Codex in-app browser.
+- Implementation captures: windowed and fullscreen browser screenshots were captured and visually inspected during this run; the browser capture API did not expose filesystem paths.
+- Viewport normalization: the windowed state was inspected inside the centered 375px WillBet shell. Fullscreen state was inspected against the complete browser viewport.
+- State: Game Detail → Fullscreen OFF/ON → Play Now or Fun Play → Game Play.
+
+### Full-view and focused comparison
+
+- The supplied game artwork is used directly, preserving its original title, reel artwork, colors, and image quality.
+- Windowed mode keeps the existing WillBet header and bottom navigation, and constrains the game viewport exactly between them.
+- Fullscreen mode hides only the WillBet header and bottom navigation and lets the game viewport fill the browser viewport without using the Browser Fullscreen API.
+- Portrait/windowed rendering uses `object-fit: cover`; wide landscape fullscreen uses `contain` to prevent destructive cropping of the portrait artwork.
+- The floating control uses the existing dark/purple design language, stays inside a safe control zone, and does not alter the supplied artwork.
+
+### Interaction and responsive QA
+
+- Play Now and Fun Play both enter the game screen through the same state transition while preserving their real/demo labels.
+- Fullscreen OFF and ON transitions passed. Close returned to the same game detail page and preserved the Fullscreen setting.
+- Home returned to Casino Lobby. The panel closed on outside click and at drag start.
+- Pointer drag passed in both directions: the control stayed inside the game region, snapped to the nearest left/right edge, and used the requested 180ms snap transition.
+- Windowed top/bottom bounds were measured against the header and navigation; the floating control did not overlap either area.
+- The implementation uses Pointer Events and `touch-action: none`, so mouse and touch share one drag path. The in-app harness exercised the pointer path; no separate physical-device touch injection was available.
+- Browser console errors and warnings: none. No page-level horizontal overflow was detected at the 375px mobile shell.
+
+### Findings
+
+- No actionable P0, P1, or P2 visual or interaction differences remain within the requested scope.
+- The supplied screenshot is shared as the current mock game screen for all games until game-specific gameplay artwork is provided.
+
+## Final result
+
+passed
+
 ## Game detail page — 2026-09-05
 
 ### Comparison evidence

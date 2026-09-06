@@ -2,7 +2,7 @@
 .search-provider-row {
   display: flex;
   align-items: stretch;
-  gap: 8px;
+  gap: 6px;
 }
 
 .search-provider-row .search-toolbar {
@@ -12,7 +12,7 @@
 
 .providers-entry {
   display: flex;
-  flex: 0 0 96px;
+  flex: 0 0 90px;
   height: 48px;
   align-items: center;
   justify-content: center;
@@ -83,6 +83,22 @@
   display: grid;
   grid-template-columns: repeat(2,minmax(0,1fr));
   gap: 10px;
+}
+
+.provider-group + .provider-group {
+  margin-top: 21px;
+}
+
+.provider-group h2 {
+  margin: 0 0 9px;
+  color: #ded5e8;
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: .15px;
+}
+
+.recent-provider-group h2 {
+  color: #d5a1ff;
 }
 
 .provider-card {
@@ -181,13 +197,48 @@
   margin-top: 0;
 }
 
+.provider-game-toolbar {
+  display: flex;
+  min-height: 36px;
+  align-items: center;
+  gap: 8px;
+  margin: -3px 0 12px;
+}
+
+.provider-game-toolbar .provider-type-chips {
+  min-width: 0;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+}
+
+.provider-game-toolbar .toolbar-action {
+  position: relative;
+  display: grid;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid #3b3a49;
+  border-radius: 10px;
+  background: #171822;
+  color: #d3c8df;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.provider-game-toolbar .toolbar-action.is-active {
+  border-color: #76509a;
+  color: var(--primary);
+}
+
 .provider-empty {
   grid-column: 1 / -1;
 }
 
 @media (max-width: 359px) {
   .search-provider-row { gap: 6px; }
-  .providers-entry { flex-basis: 90px; font-size: 10px; }
+  .providers-entry { flex-basis: 86px; font-size: 10px; }
   .provider-grid { gap: 8px; }
 }
 

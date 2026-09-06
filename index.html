@@ -11,8 +11,10 @@
     <link rel="stylesheet" href="./win-feed.css" />
     <link rel="stylesheet" href="./card-density.css" />
     <link rel="stylesheet" href="./game-covers.css" />
-    <link rel="stylesheet" href="./provider-flow.css" />
-    <link rel="stylesheet" href="./game-detail.css" />
+    <link rel="stylesheet" href="./provider-flow.css?v=provider-game-filter-1" />
+  <link rel="stylesheet" href="./game-detail.css?v=provider-identity-3" />
+    <link rel="stylesheet" href="./game-play.css" />
+    <link rel="stylesheet" href="./game-play-icons.css" />
   </head>
   <body>
     <main class="app-shell" aria-label="WillBet Casino mobile prototype">
@@ -40,7 +42,7 @@
       <section class="discovery-controls" aria-label="Casino search and categories">
         <div class="search-provider-row">
           <div class="search-toolbar">
-            <label class="search-box"><span aria-hidden="true">⌕</span><input id="searchInput" type="search" placeholder="Search games or providers" autocomplete="off" /><button id="clearSearch" class="clear-search" type="button" aria-label="Clear search">×</button></label>
+            <label class="search-box"><span aria-hidden="true">⌕</span><input id="searchInput" type="text" placeholder="Search games" autocomplete="off" /><button id="clearSearch" class="clear-search" type="button" aria-label="Clear search">×</button></label>
             <button id="openFilter" class="toolbar-action toolbar-filter" type="button" aria-label="Filter games" title="Filter games">☷</button>
             <label class="toolbar-action toolbar-sort" aria-label="Sort games" title="Sort games"><span aria-hidden="true">⇅</span><select id="sortSelect" aria-label="Sort games"><option value="">Sort</option><option value="Popular">Popular</option><option value="Most Played">Most Played</option><option value="Newest">Newest</option><option value="A-Z">A-Z</option><option value="RTP High → Low">RTP High → Low</option></select></label>
           </div>
@@ -81,6 +83,6 @@
     </aside>
 
     <div id="launchToast" class="launch-toast" role="status" aria-live="polite"></div>
-    <script src="./app.js"></script>
+    <script src="./app.js?v=provider-game-filter-2"></script>
   </body>
 </html>

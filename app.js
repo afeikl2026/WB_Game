@@ -9,6 +9,7 @@ const WIN_FEED_CONFIG = {
   pulseDuration: 1600,
   maxLatestWins: 16
 };
+const GAME_PLAY_IMAGE = './assets/game-play/wanted-dead-or-a-wild-duel-intro.png';
 
 const categories = [
   { id: 'lobby', label: 'Lobby', icon: '⌂' }, { id: 'live', label: 'Live Casino', icon: '♙' },
@@ -54,6 +55,16 @@ allGames.forEach((game,index) => {
   game.tags = [game.isNew && 'New', game.isHot && 'Hot', index % 11 === 0 && 'Jackpot'].filter(Boolean);
   game.description = descriptionThemes[game.category];
 });
+const providerGameTypeFor = game => {
+  if(game.category !== 'live') return '';
+  if(/baccarat/i.test(game.name)) return 'Baccarat';
+  if(/blackjack/i.test(game.name)) return 'Blackjack';
+  if(/dragon tiger/i.test(game.name)) return 'Dragon Tiger';
+  if(/roulette/i.test(game.name)) return 'Roulette';
+  if(/sic bo/i.test(game.name)) return 'Sic Bo';
+  return '';
+};
+allGames.forEach(game => { game.gameType = providerGameTypeFor(game); });
 const providerDefinitions = [
   { id:'pragmatic-play', name:'Pragmatic Play', logo:'', mark:'PRAGMATIC', accent:'#8f6ff0' },
   { id:'evolution', name:'Evolution', logo:'', mark:'EVOLUTION', accent:'#d9ad62' },
@@ -74,6 +85,16 @@ const providerCatalog = [
   ...providerDefinitions,
   ...[...new Set(allGames.map(game => game.provider))].filter(name => !listedProviderNames.has(name)).map((name,index) => ({ id:`provider-${index + 1}`,name,logo:'',mark:name.toUpperCase(),accent:'#9e78c1' }))
 ].map(provider => ({ ...provider, gameCount:allGames.filter(game => game.provider === provider.name).length }));
+const RECENT_PROVIDER_LIMIT = 4;
+const loadRecentProviderIds = () => {
+  try {
+    const saved = JSON.parse(localStorage.getItem('willbet-recent-providers') || '[]');
+    return Array.isArray(saved) ? saved.filter(id => providerCatalog.some(provider => provider.id === id)).slice(0,RECENT_PROVIDER_LIMIT) : [];
+  } catch { return []; }
+};
+const saveRecentProviderIds = ids => {
+  try { localStorage.setItem('willbet-recent-providers', JSON.stringify(ids)); } catch {}
+};
 allGames.forEach(game => { game.providerId = providerCatalog.find(provider => provider.name === game.provider)?.id || ''; });
 const GAME_COVER_IMAGES = Object.freeze({
   'live-3': { image:'./assets/game-covers/platinum-blackjack.png', imagePosition:'17% center' },
@@ -92,7 +113,10 @@ const baccaratRoads = [
   { name:'Aurora Baccarat', provider:'Evolution', playing:'741 Playing', pattern:'Mixed Run', road:[['p','p','t'],['b','b','b'],['p'],['b','b'],['p','p','p'],['b']] }
 ];
 
-const state = { activeCategory:'lobby', activeSub:'All', search:'', filters:{}, sort:'Popular', showLatestWins:false, currentView:'casino', activeProvider:null, providerSearch:'', activeGame:null, gameDetailReturn:null, gameDetailStack:[], detailFullscreen:false, detailCurrency:'USDT', detailDescriptionExpanded:false };
+const state = { activeCategory:'lobby', activeSub:'All', search:'', filters:{}, sort:'Popular', showLatestWins:false, currentView:'casino', activeProvider:null, providerSearch:'', providerGameType:'All', recentProviderIds:loadRecentProviderIds(), activeGame:null, gameDetailReturn:null, gameDetailStack:[], detailFullscreen:false, detailCurrency:'USDT', detailDescriptionExpanded:false, gamePlayMode:null, gamePlayType:null, gamePlayPanelOpen:false };
+const appShell = document.querySelector('.app-shell');
+const topHeader = document.querySelector('.top-header');
+const bottomNav = document.querySelector('.bottom-nav');
 const content = document.querySelector('#pageContent');
 const nav = document.querySelector('#categoryNav');
 const discoveryControls = document.querySelector('.discovery-controls');
@@ -119,6 +143,7 @@ let isLatestWinsShifting = false;
 let latestWinsShiftTimer;
 let latestWinsShiftToken = 0;
 const latestWinsShiftQueue = [];
+let gamePlayInteractionCleanup;
 
 const badge = (game, type, label) => `<span class="badge ${type} shine-target" data-badge-key="${game.id}-${type}">${label}</span>`;
 const gameCard = (game, type = '', showPlaying = false) => `<button class="game-card ${type}" type="button" data-game-id="${game.id}" aria-label="Play ${game.name} by ${game.provider}">
@@ -186,25 +211,98 @@ function publishWinEvent(){ const event=createWinEvent(pickWinGame()); updateLat
 function scheduleWinEvent(){ if(!WIN_FEED_CONFIG.enabled)return; const delay=WIN_FEED_CONFIG.minInterval+Math.random()*(WIN_FEED_CONFIG.maxInterval-WIN_FEED_CONFIG.minInterval); clearTimeout(winFeedTimer); winFeedTimer=setTimeout(()=>{publishWinEvent();scheduleWinEvent();},delay); }
 
 function renderNav(){ nav.innerHTML = categories.map(c => `<button class="category-pill ${state.activeCategory === c.id ? 'active' : ''}" type="button" role="tab" aria-selected="${state.activeCategory === c.id}" data-category="${c.id}"><span>${c.icon}</span>${c.label}</button>`).join(''); }
+function isSearchMode(){ return state.search.trim().length > 0; }
 function categoryGames(){ return allGames.filter(g => g.category === state.activeCategory && (state.activeCategory !== 'live' || state.activeSub === 'All' || g.subCategory === state.activeSub)); }
-function filtered(games){ const term = state.search.trim().toLowerCase(); return games.filter(g => (!term || `${g.name} ${g.provider}`.toLowerCase().includes(term)) && (!state.filters.provider || g.provider === state.filters.provider) && (!state.filters.rtp || (state.filters.rtp === '96%+' ? g.rtp >= 96 : g.rtp < 96)) && (!state.filters.volatility || g.volatility === state.filters.volatility) && (!state.filters.gameType || g.subCategory === state.filters.gameType)); }
+function filtered(games){ const term = state.search.trim().toLowerCase(); return games.filter(g => (!term || g.name.toLowerCase().includes(term)) && (!state.filters.provider || g.provider === state.filters.provider) && (!state.filters.rtp || (state.filters.rtp === '96%+' ? g.rtp >= 96 : g.rtp < 96)) && (!state.filters.volatility || g.volatility === state.filters.volatility) && (!state.filters.gameType || g.subCategory === state.filters.gameType)); }
+function globalGameSearch(){ const term=state.search.trim().toLowerCase(); return term ? allGames.filter(game=>game.name.toLowerCase().includes(term)) : []; }
 function sorted(games){ const out = [...games]; return out.sort((a,b) => state.sort === 'Most Played' ? b.playsToday-a.playsToday : state.sort === 'Newest' ? b.releaseDate-a.releaseDate : state.sort === 'A-Z' ? a.name.localeCompare(b.name) : state.sort === 'RTP High → Low' ? b.rtp-a.rtp : b.popularity-a.popularity); }
 const escapeAttribute = value => String(value).replace(/[&<>'"]/g,character => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' })[character]);
 const providerLogo = provider => `<span class="provider-logo" style="--provider-accent:${provider.accent}" aria-hidden="true">${provider.logo ? `<img src="${provider.logo}" alt="" />` : `<abbr title="${provider.name}">${provider.mark}</abbr>`}</span>`;
 const providerCard = provider => `<button class="provider-card" type="button" data-provider-id="${provider.id}" aria-label="Browse ${provider.name} games">${providerLogo(provider)}<strong>${provider.name}</strong><small>${provider.gameCount} ${provider.gameCount === 1 ? 'Game' : 'Games'}</small></button>`;
-function renderProviderList(){ const term=state.providerSearch.trim().toLowerCase(); const matches=providerCatalog.filter(provider=>provider.name.toLowerCase().includes(term)); return `<section class="provider-page provider-list-page"><header class="provider-page-nav"><button id="providerBack" class="provider-back" type="button" aria-label="Back to Casino">‹</button><h1>Providers</h1><span aria-hidden="true"></span></header><label class="search-box provider-search"><span aria-hidden="true">⌕</span><input id="providerSearchInput" type="search" value="${escapeAttribute(state.providerSearch)}" placeholder="Search providers" autocomplete="off" /></label><div id="providerGrid" class="provider-grid">${matches.length ? matches.map(providerCard).join('') : '<div class="empty-state provider-empty">No providers match your search.</div>'}</div></section>`; }
-function renderProviderGames(){ const provider=providerCatalog.find(item=>item.id===state.activeProvider); if(!provider)return renderProviderList(); const games=allGames.filter(game=>game.provider===provider.name); return `<section class="provider-page provider-games-page"><header class="provider-page-nav"><button id="providerGamesBack" class="provider-back" type="button" aria-label="Back to Providers">‹</button><h1>Provider Games</h1><span aria-hidden="true"></span></header><div class="provider-profile">${providerLogo(provider)}<div><h2>${provider.name}</h2><p>${games.length} ${games.length===1?'Game':'Games'}</p></div></div>${games.length ? `<div class="game-grid provider-game-grid">${games.map(game=>gameCard(game)).join('')}</div>` : '<div class="empty-state">No games are available from this provider in the current prototype.</div>'}</section>`; }
+const providerNameSort = (a,b) => a.name.localeCompare(b.name, 'en', {sensitivity:'base'});
+const providerGameTypeOrder = ['Baccarat','Blackjack','Dragon Tiger','Roulette','Sic Bo','Game Shows','Other'];
+const providerGameTypeSort = (a,b) => {
+  const aIndex=providerGameTypeOrder.indexOf(a), bIndex=providerGameTypeOrder.indexOf(b);
+  return (aIndex < 0 ? providerGameTypeOrder.length : aIndex) - (bIndex < 0 ? providerGameTypeOrder.length : bIndex) || a.localeCompare(b);
+};
+const providerGameTypes = games => [...new Set(games.map(game=>game.gameType).filter(Boolean))].sort(providerGameTypeSort);
+const providerSortOptions = () => ['Popular','Most Played','Newest','A-Z','RTP High → Low'].map(option=>`<option value="${option}" ${state.sort===option?'selected':''}>${option}</option>`).join('');
+const providerGrid = providers => `<div class="provider-grid">${providers.length ? providers.map(providerCard).join('') : '<div class="empty-state provider-empty">No providers match your search.</div>'}</div>`;
+const providerGroup = (label, providers, className='') => providers.length ? `<section class="provider-group ${className}"><h2>${label}</h2>${providerGrid(providers)}</section>` : '';
+function renderProviderListContent(){
+  const term=state.providerSearch.trim().toLowerCase();
+  if(term) return providerGrid(providerCatalog.filter(provider=>provider.name.toLowerCase().includes(term)).sort(providerNameSort));
+  const recent=state.recentProviderIds.map(id=>providerCatalog.find(provider=>provider.id===id)).filter(Boolean);
+  const numeric=providerCatalog.filter(provider=>/^\d/.test(provider.name)).sort(providerNameSort);
+  const alphabetic=providerCatalog.filter(provider=>/^[a-z]/i.test(provider.name)).sort(providerNameSort);
+  return `${providerGroup('Recent',recent,'recent-provider-group')}${providerGroup('0–9',numeric)}${providerGroup('A–Z',alphabetic)}`;
+}
+function renderProviderList(){ return `<section class="provider-page provider-list-page"><header class="provider-page-nav"><button id="providerBack" class="provider-back" type="button" aria-label="Back to Casino">‹</button><h1>Providers</h1><span aria-hidden="true"></span></header><label class="search-box provider-search"><span aria-hidden="true">⌕</span><input id="providerSearchInput" type="search" value="${escapeAttribute(state.providerSearch)}" placeholder="Search providers" autocomplete="off" /></label><div id="providerListResults">${renderProviderListContent()}</div></section>`; }
+function renderProviderGames(){
+  const provider=providerCatalog.find(item=>item.id===state.activeProvider);
+  if(!provider)return renderProviderList();
+  const providerGames=allGames.filter(game=>game.provider===provider.name);
+  const gameTypes=providerGameTypes(providerGames);
+  const showGameTypeFilter=gameTypes.length >= 2;
+  const activeGameType=showGameTypeFilter && gameTypes.includes(state.providerGameType) ? state.providerGameType : 'All';
+  if(activeGameType !== state.providerGameType) state.providerGameType=activeGameType;
+  const visibleGames=sorted(activeGameType==='All' ? providerGames : providerGames.filter(game=>game.gameType===activeGameType));
+  const typeFilter=showGameTypeFilter ? `<div class="chip-row provider-type-chips" aria-label="Game type filter">${['All',...gameTypes].map(type=>`<button class="sub-chip ${activeGameType===type?'active':''}" data-provider-game-type="${escapeAttribute(type)}" type="button">${type}</button>`).join('')}</div>` : '';
+  const sortControl=`<label class="toolbar-action toolbar-sort provider-sort ${state.sort!=='Popular'?'is-active':''}" aria-label="Sort provider games" title="Sort provider games"><span aria-hidden="true">⇅</span><select id="providerSortSelect" aria-label="Sort provider games">${providerSortOptions()}</select></label>`;
+  return `<section class="provider-page provider-games-page"><header class="provider-page-nav"><button id="providerGamesBack" class="provider-back" type="button" aria-label="Back to Providers">‹</button><h1>Provider Games</h1><span aria-hidden="true"></span></header><div class="provider-profile">${providerLogo(provider)}<div><h2>${provider.name}</h2><p>${providerGames.length} ${providerGames.length===1?'Game':'Games'}</p></div></div>${providerGames.length ? `<div class="provider-game-toolbar">${typeFilter}${sortControl}</div>${visibleGames.length ? `<div class="game-grid provider-game-grid">${visibleGames.map(game=>gameCard(game)).join('')}</div>` : '<div class="empty-state">No games found</div>'}` : '<div class="empty-state">No games are available from this provider in the current prototype.</div>'}</section>`;
+}
+function openProviderGames(providerId){
+  if(!providerCatalog.some(provider=>provider.id===providerId))return;
+  recordRecentProvider(providerId);
+  state.activeProvider=providerId;
+  state.providerGameType='All';
+  state.currentView='providerGames';
+  render();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function recordRecentProvider(providerId){
+  if(!providerCatalog.some(provider=>provider.id===providerId))return;
+  state.recentProviderIds=[providerId,...state.recentProviderIds.filter(id=>id!==providerId)].slice(0,RECENT_PROVIDER_LIMIT);
+  saveRecentProviderIds(state.recentProviderIds);
+}
 function findGame(gameId){ return allGames.find(game=>game.id===gameId) || vipGames.find(game=>game.id===gameId); }
 function updateFavorite(gameId){ const game=findGame(gameId); if(!game)return false; const next=!game.isFavorite; allGames.filter(item=>item.id===gameId).forEach(item=>item.isFavorite=next); [recommended,trending,released,vipGames].forEach(list=>list.filter(item=>item.id===gameId).forEach(item=>item.isFavorite=next)); return next; }
 function recommendedGames(game){ return allGames.filter(item=>item.provider===game.provider&&item.id!==game.id).slice(0,7); }
 function openGameDetail(gameId){ const game=findGame(gameId); if(!game)return; if(state.currentView==='gameDetail'){ state.gameDetailStack.push({activeGame:state.activeGame,detailFullscreen:state.detailFullscreen,detailCurrency:state.detailCurrency,detailDescriptionExpanded:state.detailDescriptionExpanded}); } else { state.gameDetailReturn=state.currentView; state.gameDetailStack=[]; } state.activeGame=game.id; state.detailFullscreen=false; state.detailCurrency='USDT'; state.detailDescriptionExpanded=false; state.currentView='gameDetail'; render(); window.scrollTo({top:0,behavior:'smooth'}); }
 function closeGameDetail(){ const previous=state.gameDetailStack.pop(); if(previous){ Object.assign(state,previous); render(); window.scrollTo({top:0,behavior:'smooth'}); return; } state.currentView=state.gameDetailReturn||'casino'; state.activeGame=null; state.gameDetailReturn=null; render(); window.scrollTo({top:0,behavior:'smooth'}); }
-function renderGameDetail(){ const game=findGame(state.activeGame); if(!game)return renderLobby(); const tags=[...(game.tags||[])]; const related=recommendedGames(game); const hasDescription=Boolean(game.description); const descriptionNeedsToggle=game.description?.length>118; const cover=game.image?`<img src="${game.image}" alt="" loading="eager" decoding="async" style="--image-position:${game.imagePosition||'center'}" onerror="this.hidden=true" />`:`<b>${game.name}</b>`; return `<section class="game-detail-page"><header class="game-detail-header"><button id="detailBack" class="detail-back" type="button" aria-label="Back to games">‹</button><h1 title="${escapeAttribute(game.name)}">${game.name}</h1><button id="detailFavorite" class="detail-icon-button ${game.isFavorite?'is-favorite':''}" type="button" aria-label="${game.isFavorite?'Remove':'Add'} ${game.name} ${game.isFavorite?'from':'to'} favorites">${game.isFavorite?'★':'☆'}</button><button id="detailShare" class="detail-icon-button" type="button" aria-label="Share ${game.name}">↗</button></header><div class="detail-overview"><div class="detail-cover" style="--cover:${game.cover}">${cover}</div><div class="detail-side"><div class="detail-stats"><div class="detail-stat"><strong>${game.rtp.toFixed(2)}%</strong><small>RTP</small></div><div class="detail-stat"><strong>${game.volatility}</strong><small>Volatility</small></div></div><div class="detail-settings"><div class="detail-setting"><span>Fullscreen</span><button id="detailFullscreen" class="detail-switch ${state.detailFullscreen?'is-on':''}" type="button" role="switch" aria-checked="${state.detailFullscreen}" aria-label="Fullscreen ${state.detailFullscreen?'on':'off'}"></button></div><label class="detail-setting"><span>Display currency</span><select id="detailCurrency" class="detail-currency" aria-label="Display currency">${['USDT','BTC','ETH','USD'].map(currency=>`<option value="${currency}" ${state.detailCurrency===currency?'selected':''}>${currency}</option>`).join('')}</select></label></div></div></div><div class="detail-actions"><button id="detailFunPlay" class="detail-fun-play" type="button">Fun Play</button><button id="detailPlayNow" class="detail-play-now" type="button">Play Now</button></div><section class="detail-info" aria-label="Game information"><div class="detail-provider-row"><span>Provider</span><button class="detail-provider-link" data-detail-provider="${game.providerId}" type="button">${game.provider}</button></div>${tags.length?`<div class="detail-tags">${tags.map(tag=>`<span class="detail-tag ${tag.toLowerCase()}">${tag}</span>`).join('')}</div>`:''}${hasDescription?`<div class="detail-description"><h2>Game description</h2><p class="${state.detailDescriptionExpanded?'':'is-collapsed'}">${game.description}</p>${descriptionNeedsToggle?`<button id="detailDescriptionToggle" type="button">${state.detailDescriptionExpanded?'Show Less':'Show All'}</button>`:''}</div>`:''}</section>${related.length?`<section class="detail-recommendations"><div class="section-head"><div><h2 class="section-title"><span>✦</span>Recommended Games</h2><p class="section-subtitle">More from ${game.provider}</p></div></div><div class="h-scroll">${related.map(item=>gameCard(item)).join('')}</div></section>`:''}</section>`; }
-function renderLobby(){ const results = state.search ? filtered(allGames) : null; if(results) return `<section class="section"><div class="category-head"><div><h1 class="section-title">Search results</h1><p class="section-subtitle">${results.length} matching games</p></div></div>${results.length ? `<div class="game-grid">${sorted(results).map(g => gameCard(g)).join('')}</div>` : '<div class="empty-state">No games found. Try a game or provider name.</div>'}</section>`;
+function startGamePlay(playType){ state.gamePlayMode=state.detailFullscreen?'fullscreen':'windowed'; state.gamePlayType=playType; state.gamePlayPanelOpen=false; state.currentView='gamePlay'; render(); window.scrollTo(0,0); }
+function closeGamePlay(){ state.currentView='gameDetail'; state.gamePlayMode=null; state.gamePlayType=null; state.gamePlayPanelOpen=false; render(); window.scrollTo(0,0); }
+function returnGamePlayHome(){ state.currentView='casino'; state.activeCategory='lobby'; state.activeSub='All'; state.search=''; state.filters={}; state.sort='Popular'; state.showLatestWins=false; state.activeGame=null; state.gameDetailReturn=null; state.gameDetailStack=[]; state.gamePlayMode=null; state.gamePlayType=null; state.gamePlayPanelOpen=false; searchInput.value=''; clearSearch.classList.remove('visible'); render(); window.scrollTo(0,0); }
+function renderGamePlay(){ const game=findGame(state.activeGame); const mode=state.gamePlayMode==='fullscreen'?'fullscreen':'windowed'; const playType=state.gamePlayType==='demo'?'Demo Play':'Real Money Play'; return `<section class="game-play-screen is-${mode}" aria-label="${escapeAttribute(game?.name||'Casino game')} ${playType}"><div class="game-play-view"><img class="game-play-image" src="${GAME_PLAY_IMAGE}" alt="${escapeAttribute(game?.name||'Casino')} game screen" /><div class="game-play-control-zone"><div id="gamePlayControlWrap" class="game-play-control-wrap is-right"><button id="gamePlayControl" class="game-play-control" type="button" aria-label="Open game controls" aria-expanded="false"><span class="game-play-control-home-icon" aria-hidden="true"></span><span class="game-play-control-close-icon" aria-hidden="true">×</span></button><div id="gamePlayPanel" class="game-play-panel" role="group" aria-label="Game controls" hidden><button id="gamePlayHome" type="button">Home</button><button id="gamePlayClose" type="button">Close</button></div></div></div></div></section>`; }
+function renderGameDetail(){ const game=findGame(state.activeGame); if(!game)return renderLobby(); const provider=providerCatalog.find(item=>item.id===game.providerId); const tags=[...(game.tags||[])]; const related=recommendedGames(game); const hasDescription=Boolean(game.description); const descriptionNeedsToggle=game.description?.length>118; const cover=game.image?`<img src="${game.image}" alt="" loading="eager" decoding="async" style="--image-position:${game.imagePosition||'center'}" onerror="this.hidden=true" />`:`<b>${game.name}</b>`; const providerIdentity=provider?providerLogo(provider):`<span class="detail-provider-fallback" aria-hidden="true">${game.provider.slice(0,2)}</span>`; return `<section class="game-detail-page"><header class="game-detail-header"><button id="detailBack" class="detail-back" type="button" aria-label="Back to games">‹</button><h1 title="${escapeAttribute(game.name)}">${game.name}</h1><button id="detailFavorite" class="detail-icon-button ${game.isFavorite?'is-favorite':''}" type="button" aria-label="${game.isFavorite?'Remove':'Add'} ${game.name} ${game.isFavorite?'from':'to'} favorites">${game.isFavorite?'★':'☆'}</button><button id="detailShare" class="detail-icon-button" type="button" aria-label="Share ${game.name}">↗</button></header><div class="detail-overview"><div class="detail-cover" style="--cover:${game.cover}">${cover}</div><div class="detail-side"><div class="detail-stats"><div class="detail-stat"><strong>${game.rtp.toFixed(2)}%</strong><small>RTP</small></div><div class="detail-stat"><strong>${game.volatility}</strong><small>Volatility</small></div></div><div class="detail-settings"><div class="detail-setting"><span>Fullscreen</span><button id="detailFullscreen" class="detail-switch ${state.detailFullscreen?'is-on':''}" type="button" role="switch" aria-checked="${state.detailFullscreen}" aria-label="Fullscreen ${state.detailFullscreen?'on':'off'}"></button></div><label class="detail-setting"><span>Display currency</span><select id="detailCurrency" class="detail-currency" aria-label="Display currency">${['USDT','BTC','ETH','USD'].map(currency=>`<option value="${currency}" ${state.detailCurrency===currency?'selected':''}>${currency}</option>`).join('')}</select></label></div></div></div><div class="detail-actions"><button id="detailFunPlay" class="detail-fun-play" type="button">Fun Play</button><button id="detailPlayNow" class="detail-play-now" type="button">Play Now</button></div><section class="detail-info" aria-label="Game information"><div class="detail-provider-row"><button class="detail-provider-link" data-detail-provider="${game.providerId}" type="button">${providerIdentity}<strong>${game.provider}</strong></button></div>${tags.length?`<div class="detail-tags">${tags.map(tag=>`<span class="detail-tag ${tag.toLowerCase()}">${tag}</span>`).join('')}</div>`:''}${hasDescription?`<div class="detail-description"><h2>Game description</h2><p class="${state.detailDescriptionExpanded?'':'is-collapsed'}">${game.description}</p>${descriptionNeedsToggle?`<button id="detailDescriptionToggle" type="button">${state.detailDescriptionExpanded?'Show Less':'Show All'}</button>`:''}</div>`:''}</section>${related.length?`<section class="detail-recommendations"><div class="section-head"><div><h2 class="section-title"><span>✦</span>Recommended Games</h2><p class="section-subtitle">More from ${game.provider}</p></div></div><div class="h-scroll">${related.map(item=>gameCard(item)).join('')}</div></section>`:''}</section>`; }
+function renderLobby(){ const results = isSearchMode() ? globalGameSearch() : null; if(results) return `<section class="section search-results-page"><div class="category-head"><div><h1 class="section-title">Search Results</h1><p class="section-subtitle">${results.length} matching games</p></div></div>${results.length ? `<div class="game-grid">${sorted(results).map(g => gameCard(g)).join('')}</div>` : '<div class="empty-state">No games found</div>'}</section>`;
   if(state.showLatestWins)return latestWinsActivity();
   return `${userHasHistory ? section('Recommend For You','Based on your favorites and recent play',recommended,'','☆') : ''}${section('Trending Now','Live player momentum right now',trending,'trending-card','♨',true)}${latestWinsSection()}${section('New Released','18 games added this week',released,'','✦')}<section class="section"><div class="section-head"><div><h2 class="section-title"><span>◈</span>Baccarat Road Picks</h2><p class="section-subtitle">Follow a table pattern before you sit down</p></div></div><div class="baccarat-rail">${baccaratRoads.map(roadCard).join('')}</div></section><section class="section vip-lounge"><div class="vip-head"><div><p class="vip-kicker">✦ PRIVATE TABLES</p><h2 class="vip-title">VIP <span>Lounge</span></h2><p class="vip-sub">Curated premium live games</p></div><span class="vip-status">PREMIUM</span></div><div class="vip-rail">${vipGames.map(g => `<button class="vip-card" data-game-id="${g.id}" type="button" aria-label="Open ${g.name}"><div class="vip-cover" style="--vip-cover:${g.vipCover}"><span class="vip-tag">${g.vipTag}</span><b>${g.vipSymbol}</b></div><div class="vip-card-info"><strong>${g.name}</strong><span>${g.provider}</span></div></button>`).join('')}</div></section>${section('Slots','Fresh reels and feature-rich sessions',slots.slice(7,14),'','✦')}${section('Live Casino','Real tables, live dealers',live.slice(8,15),'live-card','♙')}${section('Fishing','Ocean arcade favorites',fishing.slice(2,9),'','◒')}${section('Poker','Tournament and cash-table picks',poker.slice(1,8),'','♤')}`; }
 function renderCategory(){ let games = sorted(filtered(categoryGames())); const liveChips = state.activeCategory === 'live' ? `<div class="chip-row">${['All','Baccarat','Roulette','Blackjack','Game Shows'].map(s => `<button class="sub-chip ${state.activeSub===s?'active':''}" data-sub="${s}" type="button">${s}</button>`).join('')}</div>` : ''; return `<section class="section category-page">${liveChips}${games.length ? `<div class="game-grid">${games.map(g => gameCard(g, state.activeCategory === 'live' ? 'live-card' : '')).join('')}</div>` : '<div class="empty-state">No games match these filters. Clear filters to restore the full category.</div>'}</section>`; }
-function render(){ const isCasinoView=state.currentView==='casino'; const isCategory=isCasinoView&&state.activeCategory!=='lobby'; cancelLatestWinsShift(); renderNav(); discoveryControls.hidden=!isCasinoView; jackpot.hidden=!isCasinoView; discoveryControls.classList.toggle('is-category',isCategory); document.querySelector('#openFilter').classList.toggle('is-active',isCategory && Object.keys(state.filters).length > 0); document.querySelector('.toolbar-sort').classList.toggle('is-active',isCategory && state.sort !== 'Popular'); document.querySelector('#sortSelect').value=''; content.innerHTML=state.currentView==='gameDetail'?renderGameDetail():state.currentView==='providers'?renderProviderList():state.currentView==='providerGames'?renderProviderGames():isCategory?renderCategory():renderLobby(); observeShimmers(); observeGameCards(); }
+function render(){ const isCasinoView=state.currentView==='casino'; const isGamePlay=state.currentView==='gamePlay'; const isFullscreenGame=isGamePlay&&state.gamePlayMode==='fullscreen'; const searchMode=isCasinoView&&isSearchMode(); const isCategory=isCasinoView&&state.activeCategory!=='lobby'; if(gamePlayInteractionCleanup)gamePlayInteractionCleanup(); cancelLatestWinsShift(); renderNav(); discoveryControls.hidden=!isCasinoView; jackpot.hidden=!isCasinoView; nav.hidden=searchMode; document.querySelector('#providersEntry').hidden=searchMode; topHeader.hidden=isFullscreenGame; bottomNav.hidden=isFullscreenGame; appShell.classList.toggle('is-game-play-windowed',isGamePlay&&!isFullscreenGame); appShell.classList.toggle('is-game-play-fullscreen',isFullscreenGame); document.body.classList.toggle('is-game-play-active',isGamePlay); discoveryControls.classList.toggle('is-category',isCategory&&!searchMode); discoveryControls.classList.toggle('is-search-mode',searchMode); document.querySelector('#openFilter').classList.toggle('is-active',isCategory && Object.keys(state.filters).length > 0); document.querySelector('.toolbar-sort').classList.toggle('is-active',isCategory && state.sort !== 'Popular'); document.querySelector('#sortSelect').value=''; content.innerHTML=isGamePlay?renderGamePlay():state.currentView==='gameDetail'?renderGameDetail():state.currentView==='providers'?renderProviderList():state.currentView==='providerGames'?renderProviderGames():isCategory&&!searchMode?renderCategory():renderLobby(); observeShimmers(); observeGameCards(); if(isGamePlay)setupGamePlayInteractions(); }
+
+function setupGamePlayInteractions(){
+  const view=document.querySelector('.game-play-view'); const zone=document.querySelector('.game-play-control-zone'); const wrap=document.querySelector('#gamePlayControlWrap'); const button=document.querySelector('#gamePlayControl'); const panel=document.querySelector('#gamePlayPanel');
+  if(!view||!zone||!wrap||!button||!panel)return;
+  const controller=new AbortController(); const {signal}=controller; const drag={pointerId:null,startX:0,startY:0,startLeft:0,startTop:0,moved:false,suppressClick:false};
+  const clamp=(value,min,max)=>Math.min(Math.max(value,min),Math.max(min,max));
+  const setPanelOpen=open=>{state.gamePlayPanelOpen=open;panel.hidden=!open;button.setAttribute('aria-expanded',String(open));button.classList.toggle('is-open',open);button.setAttribute('aria-label',open?'Close game controls':'Open game controls');};
+  const updateSide=()=>{const isLeft=parseFloat(wrap.style.left||'0')+wrap.offsetWidth/2<zone.clientWidth/2;wrap.classList.toggle('is-left',isLeft);wrap.classList.toggle('is-right',!isLeft);};
+  const placeDefault=()=>{wrap.style.left=`${Math.max(0,zone.clientWidth-wrap.offsetWidth)}px`;wrap.style.top='16px';updateSide();};
+  requestAnimationFrame(placeDefault);
+  button.addEventListener('pointerdown',event=>{drag.pointerId=event.pointerId;drag.startX=event.clientX;drag.startY=event.clientY;drag.startLeft=parseFloat(wrap.style.left)||0;drag.startTop=parseFloat(wrap.style.top)||0;drag.moved=false;wrap.classList.remove('is-snapping');button.setPointerCapture(event.pointerId);event.preventDefault();},{signal});
+  button.addEventListener('pointermove',event=>{if(event.pointerId!==drag.pointerId)return;const dx=event.clientX-drag.startX,dy=event.clientY-drag.startY;if(!drag.moved&&Math.hypot(dx,dy)>=5){drag.moved=true;setPanelOpen(false);}if(!drag.moved)return;wrap.style.left=`${clamp(drag.startLeft+dx,0,zone.clientWidth-wrap.offsetWidth)}px`;wrap.style.top=`${clamp(drag.startTop+dy,0,zone.clientHeight-wrap.offsetHeight)}px`;updateSide();event.preventDefault();},{signal});
+  const finishDrag=event=>{if(event.pointerId!==drag.pointerId)return;if(button.hasPointerCapture(event.pointerId))button.releasePointerCapture(event.pointerId);if(drag.moved){drag.suppressClick=true;const snapLeft=parseFloat(wrap.style.left||'0')+wrap.offsetWidth/2<zone.clientWidth/2?0:zone.clientWidth-wrap.offsetWidth;wrap.classList.add('is-snapping');wrap.style.left=`${Math.max(0,snapLeft)}px`;updateSide();}drag.pointerId=null;};
+  button.addEventListener('pointerup',finishDrag,{signal}); button.addEventListener('pointercancel',finishDrag,{signal});
+  button.addEventListener('click',event=>{if(drag.suppressClick){drag.suppressClick=false;event.preventDefault();return;}setPanelOpen(!state.gamePlayPanelOpen);},{signal});
+  view.addEventListener('pointerdown',event=>{if(state.gamePlayPanelOpen&&!wrap.contains(event.target))setPanelOpen(false);},{signal});
+  panel.addEventListener('pointerdown',event=>event.stopPropagation(),{signal});
+  document.querySelector('#gamePlayClose').addEventListener('click',closeGamePlay,{signal});
+  document.querySelector('#gamePlayHome').addEventListener('click',returnGamePlayHome,{signal});
+  const keepInBounds=()=>{const left=wrap.classList.contains('is-left')?0:zone.clientWidth-wrap.offsetWidth;wrap.style.left=`${Math.max(0,left)}px`;wrap.style.top=`${clamp(parseFloat(wrap.style.top)||0,0,zone.clientHeight-wrap.offsetHeight)}px`;updateSide();};
+  window.addEventListener('resize',keepInBounds,{signal});
+  gamePlayInteractionCleanup=()=>{controller.abort();gamePlayInteractionCleanup=null;};
+}
 
 function showToast(message){ const toast = document.querySelector('#launchToast'); toast.textContent = message; toast.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 2300); }
 function observeShimmers(){ const badges = document.querySelectorAll('.badge.shine-target'); const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches; if(reduceMotion){ badges.forEach(el => playedBadgeKeys.add(el.dataset.badgeKey)); return; } const observer = new IntersectionObserver(entries => entries.forEach(entry => { if(!entry.isIntersecting) return; const key = entry.target.dataset.badgeKey; if(!playedBadgeKeys.has(key)){ playedBadgeKeys.add(key); entry.target.classList.add('shine-played'); } observer.unobserve(entry.target); }), { threshold:.25 }); badges.forEach(el => { if(playedBadgeKeys.has(el.dataset.badgeKey)) el.classList.remove('shine-target'); else observer.observe(el); }); }
@@ -219,28 +317,29 @@ function setupEvents(){
   nav.addEventListener('click',e => { const b=e.target.closest('[data-category]'); if(!b)return; state.activeCategory=b.dataset.category; state.activeSub='All'; state.filters={}; state.sort='Popular'; state.showLatestWins=false; render(); window.scrollTo({top:0,behavior:'smooth'}); });
   searchInput.addEventListener('input',e => { state.search=e.target.value; clearSearch.classList.toggle('visible',!!state.search); render(); }); clearSearch.addEventListener('click',()=>{searchInput.value='';state.search='';clearSearch.classList.remove('visible');render();searchInput.focus();});
   document.querySelector('#providersEntry')?.addEventListener('click',()=>{state.currentView='providers';state.activeProvider=null;state.providerSearch='';render();window.scrollTo({top:0,behavior:'smooth'});});
-  content.addEventListener('input',e=>{if(e.target.id!=='providerSearchInput')return;state.providerSearch=e.target.value;const term=state.providerSearch.trim().toLowerCase();const matches=providerCatalog.filter(provider=>provider.name.toLowerCase().includes(term));const grid=document.querySelector('#providerGrid');if(grid)grid.innerHTML=matches.length?matches.map(providerCard).join(''):'<div class="empty-state provider-empty">No providers match your search.</div>';});
+  content.addEventListener('input',e=>{if(e.target.id!=='providerSearchInput')return;state.providerSearch=e.target.value;const results=document.querySelector('#providerListResults');if(results)results.innerHTML=renderProviderListContent();});
   content.addEventListener('click',e => {
     if(e.target.closest('#detailBack')){closeGameDetail();return;}
     if(e.target.closest('#detailFavorite')){updateFavorite(state.activeGame);render();return;}
     if(e.target.closest('#detailShare')){openShareSheet();return;}
     if(e.target.closest('#detailFullscreen')){state.detailFullscreen=!state.detailFullscreen;render();return;}
-    if(e.target.closest('#detailFunPlay')){showToast('Fun Play started · demo mode');return;}
-    if(e.target.closest('#detailPlayNow')){showToast('Play Now · demo mode');return;}
+    if(e.target.closest('#detailFunPlay')){startGamePlay('demo');return;}
+    if(e.target.closest('#detailPlayNow')){startGamePlay('real');return;}
     if(e.target.closest('#detailDescriptionToggle')){state.detailDescriptionExpanded=!state.detailDescriptionExpanded;render();return;}
     const detailProvider=e.target.closest('[data-detail-provider]');
-    if(detailProvider){state.activeProvider=detailProvider.dataset.detailProvider;state.currentView='providerGames';state.gameDetailStack=[];render();window.scrollTo({top:0,behavior:'smooth'});return;}
+    if(detailProvider){openProviderGames(detailProvider.dataset.detailProvider);state.gameDetailStack=[];return;}
     const game=e.target.closest('[data-game-id]');
     if(game){openGameDetail(game.dataset.gameId);return;}
     const provider=e.target.closest('[data-provider-id]');
-    if(provider){state.activeProvider=provider.dataset.providerId;state.currentView='providerGames';render();window.scrollTo({top:0,behavior:'smooth'});return;}
+    if(provider){openProviderGames(provider.dataset.providerId);return;}
     if(e.target.closest('#providerGamesBack')){state.currentView='providers';render();window.scrollTo({top:0,behavior:'smooth'});return;}
     if(e.target.closest('#providerBack')){state.currentView='casino';render();window.scrollTo({top:0,behavior:'smooth'});return;}
     if(e.target.closest('#viewLatestWins')){state.showLatestWins=true;render();window.scrollTo({top:0,behavior:'smooth'});return;}
     if(e.target.closest('#closeLatestWins')){state.showLatestWins=false;render();return;}
+    const providerGameType=e.target.closest('[data-provider-game-type]');if(providerGameType){state.providerGameType=providerGameType.dataset.providerGameType;render();return;}
     const sub=e.target.closest('[data-sub]');if(sub){state.activeSub=sub.dataset.sub;render();return;}
   });
-  content.addEventListener('change',e=>{if(e.target.matches('#detailCurrency'))state.detailCurrency=e.target.value;});
+  content.addEventListener('change',e=>{if(e.target.matches('#detailCurrency'))state.detailCurrency=e.target.value;if(e.target.matches('#providerSortSelect')){state.sort=e.target.value;render();showToast(`Sorted by ${state.sort}`);}});
   document.querySelector('#openFilter').addEventListener('click',openSheet); document.querySelector('#sortSelect').addEventListener('change',e=>{if(!e.target.value)return;state.sort=e.target.value;render();showToast(`Sorted by ${state.sort}`);}); document.querySelector('#closeSheet').addEventListener('click',closeSheet); backdrop.addEventListener('click',closeSheet); document.querySelector('#applyFilters').addEventListener('click',applySheet); document.querySelector('#clearFilters').addEventListener('click',()=>{state.filters={};state.activeSub='All';closeSheet();render();showToast('Filters cleared');});
   document.querySelector('#closeShareSheet').addEventListener('click',closeShareSheet); shareBackdrop.addEventListener('click',closeShareSheet); shareSheet.addEventListener('click',e=>{const option=e.target.closest('[data-share-action]');if(option)shareCurrentGame(option.dataset.shareAction);});
   document.addEventListener('click',e=>{const b=e.target.closest('[data-feedback]');if(b)showToast(`${b.dataset.feedback} · prototype action`);}); document.addEventListener('keydown',e=>{if(e.key==='Escape'&&sheet.classList.contains('open'))closeSheet();if(e.key==='Escape'&&shareSheet.classList.contains('open'))closeShareSheet();});

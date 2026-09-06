@@ -1,0 +1,205 @@
+/* In-game prototype: one shared view switches between platform windowed and viewport fullscreen modes. */
+body.is-game-play-active {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.top-header[hidden],
+.bottom-nav[hidden] {
+  display: none !important;
+}
+
+.app-shell.is-game-play-windowed {
+  --game-shell-gutter: 14px;
+  height: 100dvh;
+  min-height: 100dvh;
+  padding-bottom: var(--nav-height);
+  overflow: hidden;
+}
+
+.app-shell.is-game-play-windowed .page-content {
+  height: calc(100dvh - 92px - var(--nav-height));
+  min-height: 0;
+}
+
+.app-shell.is-game-play-fullscreen {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  width: 100vw;
+  max-width: none;
+  height: 100dvh;
+  min-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #030307;
+  box-shadow: none;
+}
+
+.app-shell.is-game-play-fullscreen .page-content {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.game-play-screen,
+.game-play-view {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #05050a;
+}
+
+.game-play-screen.is-windowed {
+  width: calc(100% + (var(--game-shell-gutter) * 2));
+  margin-inline: calc(var(--game-shell-gutter) * -1);
+}
+
+.game-play-screen.is-fullscreen {
+  width: 100vw;
+  height: 100dvh;
+}
+
+.game-play-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.game-play-control-zone {
+  position: absolute;
+  z-index: 2;
+  inset: 14px;
+  pointer-events: none;
+}
+
+.is-fullscreen .game-play-control-zone {
+  top: max(16px,env(safe-area-inset-top));
+  right: max(16px,env(safe-area-inset-right));
+  bottom: max(16px,env(safe-area-inset-bottom));
+  left: max(16px,env(safe-area-inset-left));
+}
+
+.game-play-control-wrap {
+  position: absolute;
+  top: 16px;
+  left: calc(100% - 52px);
+  width: 52px;
+  height: 52px;
+  pointer-events: auto;
+}
+
+.game-play-control-wrap.is-snapping {
+  transition: left 180ms ease;
+}
+
+.game-play-control {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid #ffffff38;
+  border-radius: 50%;
+  background: #15111dcc;
+  color: #f0dfff;
+  box-shadow: 0 8px 24px #0009, inset 0 1px #ffffff24;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  touch-action: none;
+  cursor: grab;
+}
+
+.game-play-control:active {
+  cursor: grabbing;
+}
+
+.game-play-control-home-icon {
+  width: 30px;
+  height: 30px;
+  border: 4px solid #2b3034;
+  border-radius: 50%;
+  background: #d9d9d9;
+  box-shadow: 0 0 0 2px #596168, inset 0 1px 1px #fff8;
+}
+
+.game-play-control-close-icon {
+  display: none;
+  color: #f7f6fa;
+  font-size: 34px;
+  font-weight: 250;
+  line-height: 1;
+}
+
+.game-play-control.is-open .game-play-control-home-icon {
+  display: none;
+}
+
+.game-play-control.is-open .game-play-control-close-icon {
+  display: block;
+}
+
+.game-play-panel {
+  position: absolute;
+  top: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 132px;
+  height: 52px;
+  gap: 5px;
+  padding: 5px;
+  border: 1px solid #ffffff26;
+  border-radius: 14px;
+  background: #111019eb;
+  box-shadow: 0 10px 28px #000a;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.game-play-panel[hidden] {
+  display: none;
+}
+
+.game-play-control-wrap.is-right .game-play-panel {
+  right: calc(100% + 8px);
+}
+
+.game-play-control-wrap.is-left .game-play-panel {
+  left: calc(100% + 8px);
+}
+
+.game-play-panel button {
+  min-width: 0;
+  padding: 0 7px;
+  border: 1px solid #393342;
+  border-radius: 10px;
+  background: #211d29;
+  color: #eee6f5;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.game-play-panel button:last-child {
+  border-color: #6c3544;
+  background: #321b24;
+  color: #ffc3cb;
+}
+
+@media (max-width: 359px) {
+  .app-shell.is-game-play-windowed { --game-shell-gutter: 10px; }
+  .game-play-control-zone { inset: 12px; }
+}
+
+@media (orientation: landscape) {
+  .game-play-screen.is-fullscreen .game-play-image { object-fit: contain; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-play-control-wrap.is-snapping { transition: none; }
+}

@@ -5,11 +5,27 @@
 }
 
 .search-toolbar .search-box {
+  min-width: 0;
   width: 100%;
+}
+
+.search-toolbar .search-box input {
+  min-width: 0;
+  flex: 1;
+}
+
+.search-toolbar .clear-search,
+.toolbar-action {
+  flex-shrink: 0;
 }
 
 .toolbar-action {
   display: none;
+}
+
+#categoryNav[hidden],
+#providersEntry[hidden] {
+  display: none !important;
 }
 
 .discovery-controls.is-category .search-toolbar {
@@ -25,6 +41,8 @@
   height: 46px;
   min-width: 0;
   flex: 1;
+  gap: 6px;
+  padding: 0 8px;
   border: 0;
   border-radius: 14px;
   background: transparent;
@@ -33,13 +51,13 @@
 .discovery-controls.is-category .toolbar-action {
   position: relative;
   display: grid;
-  flex: 0 0 42px;
-  width: 42px;
+  flex: 0 0 36px;
+  width: 36px;
   height: 30px;
   place-items: center;
   border-left: 1px solid #353342;
   color: #d3c8df;
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1;
 }
 
