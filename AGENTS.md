@@ -1,8 +1,8 @@
-# WB_Game — Codex Project Instructions
+# WB_Game_Mobile — Codex Project Instructions
 
 ## 1. Project Purpose
 
-`WB_Game` is a long-term high-fidelity interactive prototype project for the WillBet Casino / Game product. Its primary purpose is product design exploration, high-fidelity UI prototyping, interaction demonstrations, internal product reviews, and sharing prototypes through GitHub Pages. This is a prototype project, not a production frontend application. Prioritize realistic product experience and presentation quality while keeping code reasonably clean and maintainable for future iterations.
+`WB_Game_Mobile` is a long-term high-fidelity interactive prototype project for the WillBet Casino / Game product. Its primary purpose is product design exploration, high-fidelity UI prototyping, interaction demonstrations, internal product reviews, and sharing prototypes through GitHub Pages. This is a prototype project, not a production frontend application. Prioritize realistic product experience and presentation quality while keeping code reasonably clean and maintainable for future iterations.
 
 ## 2. Core Technology
 
@@ -70,7 +70,7 @@ Priority: existing local assets, user assets, local CSS/SVG/generated placeholde
 
 ## 18. GitHub Pages Compatibility
 
-Keep Pages compatibility: repository `WB_Game`, branch `main`, remote `origin`, primary entry page suitable for Pages, relative assets, no domain-root assumptions, no localhost-only dependencies, and no APIs/services unless explicitly requested.
+Keep Pages compatibility: repository `WB_Game_Mobile`, branch `main`, remote `origin`, primary entry page suitable for Pages, relative assets, no domain-root assumptions, no localhost-only dependencies, and no APIs/services unless explicitly requested.
 
 ## 19. File Structure
 
