@@ -1,4 +1,4 @@
-/* Real game artwork sits above the existing gradient, which remains the fallback. */
+/* Real game artwork sits above one static fallback color when an image cannot load. */
 .game-card .game-cover {
   aspect-ratio: 5 / 8;
 }
@@ -27,9 +27,13 @@
   height: 100%;
   object-fit: cover;
   object-position: var(--image-position, center);
-  background: var(--cover);
+  background: var(--cover-background, #171827);
 }
 
 .game-cover-image[hidden] {
   display: none;
+}
+
+.road-info {
+  background: linear-gradient(90deg, #120d1ba3 0%, #160f2085 58%, #19111f70 100%), var(--road-cover, #171827) !important;
 }

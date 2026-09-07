@@ -59,7 +59,7 @@
   overflow: hidden;
   border: 1px solid #40364f;
   border-radius: 14px;
-  background: var(--cover);
+  background: var(--cover-background, #171827);
   box-shadow: inset 0 -48px 27px #080811a8;
 }
 

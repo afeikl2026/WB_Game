@@ -18,14 +18,24 @@ const categories = [
   { id: 'table', label: 'Table Games', icon: '◈' }, { id: 'originals', label: 'Originals', icon: '◉' }
 ];
 const providers = ['WillBet Studios', 'Evolution', 'Pragmatic Play', 'Playtech', 'PG Soft', 'JDB', 'Red Tiger', 'Microgaming', 'CQ9', '1win Games', '3 Oaks Gaming', '1X2gaming', '7Mojos'];
-const palettes = ['linear-gradient(145deg,#6126ba,#1c6bd8 54%,#10162f)', 'linear-gradient(155deg,#d5531f,#48102d 55%,#161326)', 'linear-gradient(145deg,#135d71,#17a9c8 52%,#1c265c)', 'linear-gradient(150deg,#83308f,#e65575 58%,#31133d)', 'linear-gradient(145deg,#9a7418,#332249 54%,#121827)', 'linear-gradient(145deg,#d0a02a,#8d2444 58%,#291538)', 'linear-gradient(145deg,#0d5963,#215c9d 56%,#171630)', 'linear-gradient(145deg,#903d49,#1f1b37 55%,#14283b)'];
+const STATIC_GAME_COVER_FALLBACK = '#171827';
+const GAME_COVER_ASSETS = Object.freeze([
+  './assets/game-covers/real/00323e109a.avif', './assets/game-covers/real/2f38840284.avif',
+  './assets/game-covers/real/30657f0563.avif', './assets/game-covers/real/500c61b3ea.avif',
+  './assets/game-covers/real/507223cee7.avif', './assets/game-covers/real/5e173d9eeb.avif',
+  './assets/game-covers/real/6c39ea6653.avif', './assets/game-covers/real/6c9a6bb529.avif',
+  './assets/game-covers/real/6d434b0016.avif', './assets/game-covers/real/75da044051.avif',
+  './assets/game-covers/real/7c516d26db.avif', './assets/game-covers/real/8fe55e9099.avif',
+  './assets/game-covers/real/97d1423fb0.avif', './assets/game-covers/real/ece5def0bc.avif',
+  './assets/game-covers/real/f16de34ab6.avif'
+]);
 const symbols = ['LUCKY 7','GOLDEN REEL','NOVA SPIN','ROYAL WILD','CRYSTAL BAY','FORTUNE RUSH','NIGHT VAULT','DRAGON CHANCE'];
 
 function makeGames(category, count, names, extra = {}) {
   return Array.from({ length: count }, (_, index) => ({
     id: `${category}-${index + 1}`, name: names[index % names.length] + (index >= names.length ? ` ${index + 1}` : ''),
     provider: providers[(index + category.length) % providers.length], category, subCategory: extra.subCategories?.[index % extra.subCategories.length] || 'All',
-    image: '', cover: palettes[(index + category.length) % palettes.length], symbol: symbols[index % symbols.length],
+    cover: '', coverFallback: STATIC_GAME_COVER_FALLBACK, symbol: symbols[index % symbols.length],
     playing: Math.round(56 + ((index * 137) % 2410)), playsToday: Math.round(180 + ((index * 389) % 8040)),
     playedToday: Math.round(130 + ((index * 171) % 7100)), rtp: Number((94.1 + ((index * 19) % 44) / 10).toFixed(2)),
     volatility: ['Low','Medium','High'][index % 3], isNew: index < 6, isHot: index % 4 === 0,
@@ -52,6 +62,8 @@ const descriptionThemes = {
   originals:'A WillBet original built for simple discovery, quick play, and a clean, distinctive interaction loop.'
 };
 allGames.forEach((game,index) => {
+  game.cover = GAME_COVER_ASSETS[index % GAME_COVER_ASSETS.length];
+  game.image = game.cover;
   game.tags = [game.isNew && 'New', game.isHot && 'Hot', index % 11 === 0 && 'Jackpot'].filter(Boolean);
   game.description = descriptionThemes[game.category];
 });
@@ -96,21 +108,16 @@ const saveRecentProviderIds = ids => {
   try { localStorage.setItem('willbet-recent-providers', JSON.stringify(ids)); } catch {}
 };
 allGames.forEach(game => { game.providerId = providerCatalog.find(provider => provider.name === game.provider)?.id || ''; });
-const GAME_COVER_IMAGES = Object.freeze({
-  'live-3': { image:'./assets/game-covers/platinum-blackjack.png', imagePosition:'17% center' },
-  'live-6': { image:'./assets/game-covers/gold-vault-roulette.jpg', imagePosition:'center' }
-});
-allGames.forEach(game => Object.assign(game, GAME_COVER_IMAGES[game.id] || {}));
 const recommended = [slots[2], live[0], slots[7], fishing[1], poker[2], slots[15], live[4], originals[0]];
 const trending = [live[0], live[1], live[2], slots[4], fishing[3], slots[12], live[7], poker[1]].map((g, i) => ({ ...g, isHot: true, playing: [2400,1800,987,856,744,632,502,429][i] }));
 const released = [slots[0], slots[1], live[3], poker[0], fishing[0], slots[5], live[5], originals[1]].map(g => ({ ...g, isNew: true }));
-const vipGames = [live[0], live[2], live[5], table[0]].map((g, i) => ({ ...g, name: ['VIP Baccarat','High Limit Blackjack','Premium Roulette','No Commission Baccarat'][i], vipTag: i === 0 ? 'EXCLUSIVE' : 'VIP TABLE', vipSymbol: ['B♛','21','◉','B♜'][i], vipCover: palettes[(i + 3) % palettes.length], tags:[i === 0 ? 'Exclusive' : 'VIP', ...g.tags] }));
+const vipGames = [live[0], live[2], live[5], table[0]].map((g, i) => ({ ...g, name: ['VIP Baccarat','High Limit Blackjack','Premium Roulette','No Commission Baccarat'][i], vipTag: i === 0 ? 'EXCLUSIVE' : 'VIP TABLE', vipSymbol: ['B♛','21','◉','B♜'][i], vipCover:`url('${g.cover}') center/cover no-repeat`, tags:[i === 0 ? 'Exclusive' : 'VIP', ...g.tags] }));
 const baccaratRoads = [
-  { name:'Velvet Baccarat', provider:'Evolution', playing:'2.4K Playing', pattern:'Banker Streak', road:[['b','b','b','b'],['p'],['b','b','b'],['p','p'],['b','b']] },
-  { name:'Royal Dragon Baccarat', provider:'Pragmatic Play', playing:'1.8K Playing', pattern:'Player Streak', road:[['p','p','p','p','p'],['b'],['p','p','p'],['b','b'],['p']] },
-  { name:'Sapphire Baccarat', provider:'Playtech', playing:'987 Playing', pattern:'Alternating', road:[['b'],['p'],['b'],['p'],['b'],['p'],['b'],['p'],['b']] },
-  { name:'Grand Chamber', provider:'WillBet Studios', playing:'856 Playing', pattern:'Two-by-Two', road:[['b','b'],['p','p'],['b','b'],['p','p'],['b','b'],['p','p']] },
-  { name:'Aurora Baccarat', provider:'Evolution', playing:'741 Playing', pattern:'Mixed Run', road:[['p','p','t'],['b','b','b'],['p'],['b','b'],['p','p','p'],['b']] }
+  { name:'Velvet Baccarat', provider:'Evolution', gameId:'live-1', cover:'./assets/game-covers/real/6c39ea6653.avif', playing:'2.4K Playing', pattern:'Banker Streak', road:[['b','b','b','b'],['p'],['b','b','b'],['p','p'],['b','b']] },
+  { name:'Royal Dragon Baccarat', provider:'Pragmatic Play', gameId:'live-2', cover:'./assets/game-covers/real/8fe55e9099.avif', playing:'1.8K Playing', pattern:'Player Streak', road:[['p','p','p','p','p'],['b'],['p','p','p'],['b','b'],['p']] },
+  { name:'Sapphire Baccarat', provider:'Playtech', gameId:'live-3', cover:'./assets/game-covers/real/75da044051.avif', playing:'987 Playing', pattern:'Alternating', road:[['b'],['p'],['b'],['p'],['b'],['p'],['b'],['p'],['b']] },
+  { name:'Grand Chamber', provider:'WillBet Studios', gameId:'live-6', cover:'./assets/game-covers/real/30657f0563.avif', playing:'856 Playing', pattern:'Two-by-Two', road:[['b','b'],['p','p'],['b','b'],['p','p'],['b','b'],['p','p']] },
+  { name:'Aurora Baccarat', provider:'Evolution', gameId:'live-7', cover:'./assets/game-covers/real/6c39ea6653.avif', playing:'741 Playing', pattern:'Mixed Run', road:[['p','p','t'],['b','b','b'],['p'],['b','b'],['p','p','p'],['b']] }
 ];
 
 const rotateLobbyGames = (games, startIndex = 0) => [...games.slice(startIndex), ...games.slice(0, startIndex)];
@@ -158,14 +165,14 @@ let gamePlayInteractionCleanup;
 
 const badge = (game, type, label) => `<span class="badge ${type} shine-target" data-badge-key="${game.id}-${type}">${label}</span>`;
 const gameCard = (game, type = '', showPlaying = false) => `<button class="game-card ${type}" type="button" data-game-id="${game.id}" aria-label="Play ${game.name} by ${game.provider}">
-  <div class="game-cover" style="--cover:${game.cover}"><span class="fallback-cover-title" aria-hidden="true">${game.name}</span>${game.image ? `<img class="game-cover-image" src="${game.image}" alt="" loading="lazy" decoding="async" style="--image-position:${game.imagePosition || 'center'}" onerror="this.hidden=true" />` : ''}${game.isHot ? badge(game, 'hot', 'Hot') : ''}${game.isNew ? badge(game, 'new', 'New') : ''}${game.isFavorite ? '<span class="favorite">★</span>' : ''}</div>
+  <div class="game-cover" style="--cover-background:${game.coverFallback || STATIC_GAME_COVER_FALLBACK}"><span class="fallback-cover-title" aria-hidden="true">${game.name}</span>${game.cover ? `<img class="game-cover-image" src="${game.cover}" alt="" loading="lazy" decoding="async" style="--image-position:${game.imagePosition || 'center'}" onerror="this.hidden=true" />` : ''}${game.isHot ? badge(game, 'hot', 'Hot') : ''}${game.isNew ? badge(game, 'new', 'New') : ''}${game.isFavorite ? '<span class="favorite">★</span>' : ''}</div>
   ${showPlaying ? `<div class="game-meta"><div class="play-count">${game.playing > 999 ? `${(game.playing / 1000).toFixed(1)}K Playing` : `${game.playsToday} Plays Today`}</div></div>` : ''}</button>`;
 const section = (title, subtitle, games, type = '', icon = '✦', showPlaying = false, lobbyDetailId = '') => `<section class="section"><div class="section-head"><div><h2 class="section-title"><span>${icon}</span>${title}</h2>${subtitle ? `<p class="section-subtitle">${subtitle}</p>` : ''}</div>${lobbyDetailId ? `<button class="view-all" type="button" data-lobby-detail="${lobbyDetailId}">View All ›</button>` : ''}</div><div class="h-scroll">${games.map(g => gameCard(g, type, showPlaying)).join('')}</div></section>`;
-const roadCard = road => { let cells = ''; road.road.forEach((col, c) => col.forEach((outcome, r) => { cells += `<span class="road-cell" style="grid-column:${c + 1};grid-row:${r + 1}"><i class="road-dot ${outcome}"></i></span>`; })); return `<article class="baccarat-road-card"><div class="road-info"><span class="dealer-chip">LIVE DEALER</span><h3 class="road-game">${road.name}</h3><p class="road-provider">${road.provider}</p><p class="road-pattern">${road.pattern}</p></div><div class="road-map" aria-label="${road.pattern} baccarat road map">${cells}</div></article>`; };
+const roadCard = road => { const cover=road.cover ? `url('${road.cover}') center/cover no-repeat` : STATIC_GAME_COVER_FALLBACK; let cells = ''; road.road.forEach((col, c) => col.forEach((outcome, r) => { cells += `<span class="road-cell" style="grid-column:${c + 1};grid-row:${r + 1}"><i class="road-dot ${outcome}"></i></span>`; })); return `<article class="baccarat-road-card"><div class="road-info" style="--road-cover:${cover}"><span class="dealer-chip">LIVE DEALER</span><p class="road-pattern">${road.pattern}</p></div><div class="road-map" aria-label="${road.pattern} baccarat road map">${cells}</div></article>`; };
 
 const formatWinAmount = event => `+${event.amount.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} ${event.currency}`;
 const winGame = event => vipGames.find(g => g.id === event.gameId && g.name === event.gameName) || allGames.find(g => g.id === event.gameId) || vipGames.find(g => g.id === event.gameId);
-const latestWinCard = (event, className = '') => { const game = winGame(event); const isActivityRow = className.includes('latest-win-row'); const cover = game?.image ? `<img src="${game.image}" alt="" loading="lazy" decoding="async" style="--image-position:${game.imagePosition || 'center'}" onerror="this.hidden=true" />` : `<b>${game?.symbol || game?.vipSymbol || 'WIN'}</b>`; return `<button class="latest-win-card ${className}" type="button" data-game-id="${event.gameId}" aria-label="Open ${event.gameName}, latest win ${formatWinAmount(event)}"><span class="latest-win-cover" style="--win-cover:${game?.cover || game?.vipCover || palettes[0]}">${cover}${event.multiplier ? `<i>${event.multiplier.toFixed(1)}×</i>` : ''}</span><span class="latest-win-user">${event.userName}</span><strong>${formatWinAmount(event)}</strong>${isActivityRow ? `<span class="latest-win-name">${event.gameName}</span>` : ''}</button>`; };
+const latestWinCard = (event, className = '') => { const game = winGame(event); const isActivityRow = className.includes('latest-win-row'); const cover = game?.cover ? `<img src="${game.cover}" alt="" loading="lazy" decoding="async" style="--image-position:${game.imagePosition || 'center'}" onerror="this.hidden=true" />` : `<b>${game?.symbol || game?.vipSymbol || 'WIN'}</b>`; return `<button class="latest-win-card ${className}" type="button" data-game-id="${event.gameId}" aria-label="Open ${event.gameName}, latest win ${formatWinAmount(event)}"><span class="latest-win-cover" style="--win-cover:${game?.coverFallback || STATIC_GAME_COVER_FALLBACK}">${cover}${event.multiplier ? `<i>${event.multiplier.toFixed(1)}×</i>` : ''}</span><span class="latest-win-user">${event.userName}</span><strong>${formatWinAmount(event)}</strong>${isActivityRow ? `<span class="latest-win-name">${event.gameName}</span>` : ''}</button>`; };
 const latestWinsSection = () => !WIN_FEED_CONFIG.enabled ? '' : `<section class="section latest-wins-section" aria-label="Latest Wins"><div class="section-head"><div><h2 class="section-title"><span>↗</span>Latest Wins</h2><p class="section-subtitle">Winning on WillBet right now</p></div></div><div id="latestWinsRail" class="latest-wins-rail"><div class="latest-wins-track">${latestWins.slice(0,LATEST_WINS_RAIL_LIMIT).reverse().map(event => latestWinCard(event)).join('')}</div></div></section>`;
 
 function randomWinAmount(){ const roll=Math.random(); const range=roll<.6?[1,50]:roll<.9?[50,300]:roll<.99?[300,2000]:[2000,5200]; return Number((range[0]+Math.random()*(range[1]-range[0])).toFixed(2)); }
