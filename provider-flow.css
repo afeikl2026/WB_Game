@@ -246,3 +246,40 @@
   .providers-entry,
   .provider-card { transition: none; }
 }
+
+
+/* Compact pagination for full game and provider lists. */
+.load-more {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 18px 0 8px;
+  color: #aaa4b6;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.load-more-button {
+  min-width: 112px;
+  min-height: 34px;
+  padding: 0 16px;
+  border: 1px solid #6f4b88;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #241834, #322044);
+  color: #eadbfa;
+  font-size: 11px;
+  font-weight: 850;
+  transition: border-color .2s ease, background-color .2s ease, transform .2s ease;
+}
+
+.load-more-button:active {
+  border-color: #bd7eed;
+  background: #472660;
+  transform: translateY(1px);
+}
+
+.load-more-count {
+  color: #9c95a9;
+  letter-spacing: .1px;
+}

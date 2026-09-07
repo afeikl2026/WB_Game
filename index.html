@@ -10,8 +10,8 @@
     <link rel="stylesheet" href="./toolbar.css" />
     <link rel="stylesheet" href="./win-feed.css" />
     <link rel="stylesheet" href="./card-density.css?v=compact-rail-3" />
-    <link rel="stylesheet" href="./game-covers.css?v=real-game-covers-2" />
-    <link rel="stylesheet" href="./provider-flow.css?v=provider-game-filter-1" />
+    <link rel="stylesheet" href="./game-covers.css?v=region-restricted-1" />
+    <link rel="stylesheet" href="./provider-flow.css?v=load-more-1" />
   <link rel="stylesheet" href="./game-detail.css?v=provider-identity-3" />
     <link rel="stylesheet" href="./game-play.css" />
     <link rel="stylesheet" href="./game-play-icons.css" />
@@ -43,7 +43,7 @@
           <div class="search-toolbar">
             <label class="search-box"><span aria-hidden="true">⌕</span><input id="searchInput" type="text" placeholder="Search games" autocomplete="off" /><button id="clearSearch" class="clear-search" type="button" aria-label="Clear search">×</button></label>
             <button id="openFilter" class="toolbar-action toolbar-filter" type="button" aria-label="Filter games" title="Filter games">☷</button>
-            <label class="toolbar-action toolbar-sort" aria-label="Sort games" title="Sort games"><span aria-hidden="true">⇅</span><select id="sortSelect" aria-label="Sort games"><option value="">Sort</option><option value="Popular">Popular</option><option value="Most Played">Most Played</option><option value="Newest">Newest</option><option value="A-Z">A-Z</option><option value="RTP High → Low">RTP High → Low</option></select></label>
+            <label class="toolbar-action toolbar-sort" aria-label="Sort games" title="Sort games"><span aria-hidden="true">⇅</span><select id="sortSelect" aria-label="Sort games"><option value="">Sort</option><option value="Popular">Popular</option><option value="Newest">Newest</option><option value="A-Z">A-Z</option><option value="Z-A">Z-A</option><option value="RTP High → Low">RTP High → Low</option></select></label>
           </div>
           <button id="providersEntry" class="providers-entry" type="button" aria-label="Browse game providers"><span aria-hidden="true">▦</span>Providers</button>
         </div>
@@ -82,6 +82,6 @@
     </aside>
 
     <div id="launchToast" class="launch-toast" role="status" aria-live="polite"></div>
-    <script src="./app.js?v=live-subcategories-1"></script>
+    <script src="./app.js?v=load-more-3"></script>
   </body>
 </html>

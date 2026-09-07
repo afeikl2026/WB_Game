@@ -37,3 +37,54 @@
 .road-info {
   background: linear-gradient(90deg, #120d1ba3 0%, #160f2085 58%, #19111f70 100%), var(--road-cover, #171827) !important;
 }
+
+
+/* Availability state for games restricted in the current region. */
+.game-restricted-overlay {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 5px;
+  padding: 10px 6px;
+  background: linear-gradient(180deg, #07080bb3 0%, #05060be0 100%);
+  color: #f2eff6;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1.25;
+  text-align: center;
+  text-shadow: 0 1px 2px #000;
+  pointer-events: none;
+}
+
+.game-restricted-icon {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  margin: 0 auto;
+  place-items: center;
+  border: 1px solid #d9d3e180;
+  border-radius: 50%;
+  background: #17161dc2;
+  color: #f5f2fa;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.is-region-restricted .game-cover-image,
+.is-region-restricted .fallback-cover-title,
+.is-region-restricted .vip-cover::before {
+  filter: brightness(.58) saturate(.62);
+}
+
+.vip-cover .game-restricted-overlay {
+  font-size: 8px;
+}
+
+.vip-cover .game-restricted-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 12px;
+}
