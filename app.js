@@ -9,6 +9,13 @@ const WIN_FEED_CONFIG = {
   pulseDuration: 1600,
   maxLatestWins: 16
 };
+const BIG_WIN_CONFIG = {
+  enabled: true,
+  amountThreshold: 1000,
+  multiplierThreshold: 100,
+  displayDuration: 5000,
+  transitionDuration: 500
+};
 const GAME_PLAY_IMAGE = './assets/game-play/wanted-dead-or-a-wild-duel-intro.png';
 const BANNER_AUTOPLAY_DURATION = 5000;
 const CASINO_BANNERS = Object.freeze([
@@ -118,14 +125,34 @@ allGames.forEach(game => { game.providerId = providerCatalog.find(provider => pr
 const recommended = [slots[2], live[0], slots[7], fishing[1], poker[2], slots[15], live[4], originals[0]];
 const trending = [live[0], live[1], live[2], slots[4], fishing[3], slots[12], live[7], poker[1]].map((g, i) => ({ ...g, isHot: true, playing: [2400,1800,987,856,744,632,502,429][i] }));
 const released = [slots[0], slots[1], live[3], poker[0], fishing[0], slots[5], live[5], originals[1]].map(g => ({ ...g, isNew: true }));
-const vipGames = [live[0], live[2], live[5], table[0]].map((g, i) => ({ ...g, name: ['VIP Baccarat','High Limit Blackjack','Premium Roulette','No Commission Baccarat'][i], vipTag: i === 0 ? 'EXCLUSIVE' : 'VIP TABLE', vipSymbol: ['B♛','21','◉','B♜'][i], vipCover:`url('${g.cover}') center/cover no-repeat`, tags:[i === 0 ? 'Exclusive' : 'VIP', ...g.tags] }));
+const vipRoadCovers = [
+  './assets/game-covers/real/6c39ea6653.avif',
+  './assets/game-covers/real/8fe55e9099.avif',
+  './assets/game-covers/real/75da044051.avif',
+  './assets/game-covers/real/30657f0563.avif'
+];
+const vipGames = [live[0], live[2], live[5], table[0]].map((g, i) => ({ ...g, name: ['VIP Baccarat','High Limit Blackjack','Premium Roulette','No Commission Baccarat'][i], vipTag: i === 0 ? 'EXCLUSIVE' : 'VIP TABLE', minBet: [100, 250, 500, 1000][i], vipCover:`url('${vipRoadCovers[i]}') center/cover no-repeat`, tags:[i === 0 ? 'Exclusive' : 'VIP', ...g.tags] }));
+const baccaratTableGames = live.filter(game => /baccarat/i.test(game.name));
 const baccaratRoads = [
   { name:'Velvet Baccarat', provider:'Evolution', gameId:'live-1', cover:'./assets/game-covers/real/6c39ea6653.avif', playing:'2.4K Playing', pattern:'Banker Streak', road:[['b','b','b','b'],['p'],['b','b','b'],['p','p'],['b','b']] },
   { name:'Royal Dragon Baccarat', provider:'Pragmatic Play', gameId:'live-2', cover:'./assets/game-covers/real/8fe55e9099.avif', playing:'1.8K Playing', pattern:'Player Streak', road:[['p','p','p','p','p'],['b'],['p','p','p'],['b','b'],['p']] },
   { name:'Sapphire Baccarat', provider:'Playtech', gameId:'live-3', cover:'./assets/game-covers/real/75da044051.avif', playing:'987 Playing', pattern:'Alternating', road:[['b'],['p'],['b'],['p'],['b'],['p'],['b'],['p'],['b']] },
-  { name:'Grand Chamber', provider:'WillBet Studios', gameId:'live-6', cover:'./assets/game-covers/real/30657f0563.avif', playing:'856 Playing', pattern:'Two-by-Two', road:[['b','b'],['p','p'],['b','b'],['p','p'],['b','b'],['p','p']] },
-  { name:'Aurora Baccarat', provider:'Evolution', gameId:'live-7', cover:'./assets/game-covers/real/6c39ea6653.avif', playing:'741 Playing', pattern:'Mixed Run', road:[['p','p','t'],['b','b','b'],['p'],['b','b'],['p','p','p'],['b']] }
+  { name:'Grand Chamber Baccarat', provider:'WillBet Studios', gameId:'live-6', cover:'./assets/game-covers/real/30657f0563.avif', playing:'856 Playing', pattern:'Two-by-Two', road:[['b','b'],['p','p'],['b','b'],['p','p'],['b','b'],['p','p']] },
+  { name:'Aurora Baccarat', provider:'Evolution', gameId:'live-7', cover:'./assets/game-covers/real/6c39ea6653.avif', playing:'741 Playing', pattern:'Mixed Run', road:[['p','p','t'],['b','b','b'],['p'],['b','b'],['p','p','p'],['b']] },
+  ...Array.from({length:10},(_,index)=>{
+    const game=baccaratTableGames[index%baccaratTableGames.length];
+    const tableNames=['Imperial Baccarat','Golden Dragon Baccarat','Emerald Baccarat','Royal Crown Baccarat','Majestic Baccarat','Fortune Palace Baccarat','Pearl Room Baccarat','Oriental Baccarat','Grand Salon Baccarat','Private Baccarat'];
+    const patternRoads=[
+      { pattern:'Banker Two-by-Two', road:[['b','b'],['p','p'],['b','b'],['p'],['b','b','b'],['p']] },
+      { pattern:'Player Run', road:[['p','p','p'],['b'],['p','p','p','p'],['b','b'],['p']] },
+      { pattern:'Chop Pattern', road:[['b'],['p'],['b'],['p'],['b'],['p'],['b'],['p']] },
+      { pattern:'Banker Long Run', road:[['b','b','b','b','b'],['p'],['b','b','b'],['p','p']] },
+      { pattern:'Balanced Road', road:[['p','p'],['b','b'],['p'],['b','b','b'],['p','p'],['b']] }
+    ][index%5];
+    return { name:tableNames[index], provider:game.provider, gameId:game.id, cover:vipRoadCovers[index%vipRoadCovers.length], playing:`${[632,587,542,498,461,426,398,364,331,298][index]} Playing`, tableInfo:`Min ${[50,100,100,200,50,100,250,100,200,500][index]} USDT`, ...patternRoads };
+  })
 ];
+const LOBBY_BACCARAT_ROAD_LIMIT = 5;
 
 const rotateLobbyGames = (games, startIndex = 0) => [...games.slice(startIndex), ...games.slice(0, startIndex)];
 const lobbyDetailCategories = {
@@ -148,6 +175,7 @@ const discoveryControls = document.querySelector('.discovery-controls');
 const bannerCarousel = document.querySelector('#casinoBannerCarousel');
 const bannerTrack = document.querySelector('#casinoBannerTrack');
 const bannerProgress = document.querySelector('#casinoBannerProgress');
+const bigWinMarquee = document.querySelector('#bigWinMarquee');
 const searchInput = document.querySelector('#searchInput');
 const clearSearch = document.querySelector('#clearSearch');
 const sheet = document.querySelector('#filterSheet');
@@ -174,13 +202,17 @@ let gamePlayInteractionCleanup;
 let activeBannerIndex = 0;
 let bannerAutoplayTimer;
 let bannerResetTimer;
+let activeBigWinEvent;
+let bigWinExitTimer;
+let bigWinEndTimer;
+const bigWinQueue = [];
 
 const badge = (game, type, label) => `<span class="badge ${type} shine-target" data-badge-key="${game.id}-${type}">${label}</span>`;
 const gameCard = (game, type = '', showPlaying = false) => `<button class="game-card ${type}" type="button" data-game-id="${game.id}" aria-label="Play ${game.name} by ${game.provider}">
   <div class="game-cover" style="--cover-background:${game.coverFallback || STATIC_GAME_COVER_FALLBACK}"><span class="fallback-cover-title" aria-hidden="true">${game.name}</span>${game.cover ? `<img class="game-cover-image" src="${game.cover}" alt="" loading="lazy" decoding="async" style="--image-position:${game.imagePosition || 'center'}" onerror="this.hidden=true" />` : ''}${game.isHot ? badge(game, 'hot', 'Hot') : ''}${game.isNew ? badge(game, 'new', 'New') : ''}${game.isFavorite ? '<span class="favorite">★</span>' : ''}</div>
   ${showPlaying ? `<div class="game-meta"><div class="play-count">${game.playing > 999 ? `${(game.playing / 1000).toFixed(1)}K Playing` : `${game.playsToday} Plays Today`}</div></div>` : ''}</button>`;
 const section = (title, subtitle, games, type = '', icon = '✦', showPlaying = false, lobbyDetailId = '') => `<section class="section"><div class="section-head"><div><h2 class="section-title"><span>${icon}</span>${title}</h2>${subtitle ? `<p class="section-subtitle">${subtitle}</p>` : ''}</div>${lobbyDetailId ? `<button class="view-all" type="button" data-lobby-detail="${lobbyDetailId}">View All ›</button>` : ''}</div><div class="h-scroll">${games.map(g => gameCard(g, type, showPlaying)).join('')}</div></section>`;
-const roadCard = road => { const cover=road.cover ? `url('${road.cover}') center/cover no-repeat` : STATIC_GAME_COVER_FALLBACK; let cells = ''; road.road.forEach((col, c) => col.forEach((outcome, r) => { cells += `<span class="road-cell" style="grid-column:${c + 1};grid-row:${r + 1}"><i class="road-dot ${outcome}"></i></span>`; })); return `<article class="baccarat-road-card"><div class="road-info" style="--road-cover:${cover}"><span class="dealer-chip">LIVE DEALER</span><p class="road-pattern">${road.pattern}</p></div><div class="road-map" aria-label="${road.pattern} baccarat road map">${cells}</div></article>`; };
+const roadCard = (road, detailed = false) => { const cover=road.cover ? `url('${road.cover}') center/cover no-repeat` : STATIC_GAME_COVER_FALLBACK; let cells = ''; road.road.forEach((col, c) => col.forEach((outcome, r) => { cells += `<span class="road-cell" style="grid-column:${c + 1};grid-row:${r + 1}"><i class="road-dot ${outcome}"></i></span>`; })); const details=detailed ? `<p class="road-game">${road.name}</p><p class="road-provider">${road.provider}</p><p class="road-playing">${road.tableInfo||road.playing}</p>` : ''; const tag=detailed?'button':'article'; const attrs=detailed?` type="button" data-road-game-id="${road.gameId}" aria-label="Open ${road.name}, ${road.pattern}"`:''; return `<${tag} class="baccarat-road-card ${detailed?'baccarat-road-card-detail':''}"${attrs}><div class="road-info" style="--road-cover:${cover}"><span class="dealer-chip">${road.pattern}</span>${details}</div><div class="road-map" aria-label="${road.pattern} baccarat road map">${cells}</div></${tag}>`; };
 
 const activeCasinoBanners = () => CASINO_BANNERS.filter(banner => banner.enabled).sort((a,banner) => a.order - banner.order);
 const jackpotBanner = isClone => `<section class="jackpot" aria-label="WillBet Casino Jackpot"><div class="jackpot-art" aria-hidden="true"></div><div class="jackpot-copy"><p class="eyebrow">✦ WILLBET CASINO JACKPOT</p><p class="jackpot-amount"><span class="jackpot-amount-value" ${isClone ? '' : 'id="jackpotAmount"'}>42,680.38</span> <small>USDT</small></p><p class="jackpot-subtitle">Every Bet Builds the Pot</p><p class="jackpot-timer">◉ Weekly Jackpot <b>·</b> 02D 13H 42M</p></div><div class="jackpot-feed jackpot-feed-text" ${isClone ? '' : 'id="jackpotFeed"'} aria-live="polite">✦ +2.14 USDT added to the Jackpot</div></section>`;
@@ -224,6 +256,38 @@ function resetBannerAutoplayForVisibility(){
 }
 
 const formatWinAmount = event => `+${event.amount.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} ${event.currency}`;
+const isBigWin = event => BIG_WIN_CONFIG.enabled && (event.amount >= BIG_WIN_CONFIG.amountThreshold || (event.multiplier || 0) >= BIG_WIN_CONFIG.multiplierThreshold);
+const bigWinMetric = event => (event.multiplier || 0) >= BIG_WIN_CONFIG.multiplierThreshold
+  ? `${Number.isInteger(event.multiplier) ? event.multiplier : event.multiplier.toFixed(1)}×`
+  : `${event.amount.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2})} ${event.currency}`;
+const canShowBigWin = () => !document.hidden && state.currentView !== 'gamePlay';
+function clearBigWinMarquee({clearQueue=false}={}){
+  clearTimeout(bigWinExitTimer); clearTimeout(bigWinEndTimer);
+  activeBigWinEvent=undefined;
+  bigWinMarquee.classList.remove('is-visible','is-exiting');
+  bigWinMarquee.hidden=true;
+  if(clearQueue) bigWinQueue.length=0;
+}
+function processBigWinQueue(){
+  if(activeBigWinEvent || !bigWinQueue.length || !canShowBigWin()) return;
+  const event=bigWinQueue.shift(); activeBigWinEvent=event;
+  const metric=bigWinMetric(event);
+  bigWinMarquee.dataset.gameId=event.gameId;
+  bigWinMarquee.setAttribute('aria-label',`Open ${event.gameName}, a big win of ${metric}`);
+  bigWinMarquee.innerHTML=`<span class="big-win-icon" aria-hidden="true">✦</span><span class="big-win-copy">Congratulations <b>${event.userName}</b> won <strong>${metric}</strong> on <em>${event.gameName}</em>!</span><span class="big-win-arrow" aria-hidden="true">›</span>`;
+  bigWinMarquee.hidden=false;
+  requestAnimationFrame(()=>bigWinMarquee.classList.add('is-visible'));
+  bigWinExitTimer=setTimeout(()=>{ bigWinMarquee.classList.remove('is-visible'); bigWinMarquee.classList.add('is-exiting'); },BIG_WIN_CONFIG.displayDuration-BIG_WIN_CONFIG.transitionDuration);
+  bigWinEndTimer=setTimeout(()=>{ clearBigWinMarquee(); processBigWinQueue(); },BIG_WIN_CONFIG.displayDuration);
+}
+function enqueueBigWin(event){
+  if(!isBigWin(event) || !canShowBigWin()) return;
+  bigWinQueue.push(event); processBigWinQueue();
+}
+function handleBigWinVisibility(){
+  if(document.hidden) clearBigWinMarquee({clearQueue:true});
+  else processBigWinQueue();
+}
 const winGame = event => vipGames.find(g => g.id === event.gameId && g.name === event.gameName) || allGames.find(g => g.id === event.gameId) || vipGames.find(g => g.id === event.gameId);
 const latestWinCard = (event, className = '') => { const game = winGame(event); const isActivityRow = className.includes('latest-win-row'); const cover = game?.cover ? `<img src="${game.cover}" alt="" loading="lazy" decoding="async" style="--image-position:${game.imagePosition || 'center'}" onerror="this.hidden=true" />` : `<b>${game?.symbol || game?.vipSymbol || 'WIN'}</b>`; return `<button class="latest-win-card ${className}" type="button" data-game-id="${event.gameId}" aria-label="Open ${event.gameName}, latest win ${formatWinAmount(event)}"><span class="latest-win-cover" style="--win-cover:${game?.coverFallback || STATIC_GAME_COVER_FALLBACK}">${cover}${event.multiplier ? `<i>${event.multiplier.toFixed(1)}×</i>` : ''}</span><span class="latest-win-user">${event.userName}</span><strong>${formatWinAmount(event)}</strong>${isActivityRow ? `<span class="latest-win-name">${event.gameName}</span>` : ''}</button>`; };
 const latestWinsSection = () => !WIN_FEED_CONFIG.enabled ? '' : `<section class="section latest-wins-section" aria-label="Latest Wins"><div class="section-head"><div><h2 class="section-title"><span>↗</span>Latest Wins</h2><p class="section-subtitle">Winning on WillBet right now</p></div></div><div id="latestWinsRail" class="latest-wins-rail"><div class="latest-wins-track">${latestWins.slice(0,LATEST_WINS_RAIL_LIMIT).reverse().map(event => latestWinCard(event)).join('')}</div></div></section>`;
@@ -277,7 +341,7 @@ function pulseVisibleGameCard(event){
   requestAnimationFrame(()=>pulse.classList.add('is-visible'));
   setTimeout(()=>{ pulse.classList.add('is-leaving'); setTimeout(()=>{ pulse.remove(); if(activePulse===pulse)activePulse=null; },220); },WIN_FEED_CONFIG.pulseDuration-220);
 }
-function publishWinEvent(){ const event=createWinEvent(pickWinGame()); updateLatestWins(event); pulseVisibleGameCard(event); }
+function publishWinEvent(){ const event=createWinEvent(pickWinGame()); updateLatestWins(event); pulseVisibleGameCard(event); enqueueBigWin(event); }
 function scheduleWinEvent(){ if(!WIN_FEED_CONFIG.enabled)return; const delay=WIN_FEED_CONFIG.minInterval+Math.random()*(WIN_FEED_CONFIG.maxInterval-WIN_FEED_CONFIG.minInterval); clearTimeout(winFeedTimer); winFeedTimer=setTimeout(()=>{publishWinEvent();scheduleWinEvent();},delay); }
 
 function renderNav(){ nav.innerHTML = categories.map(c => `<button class="category-pill ${state.activeCategory === c.id ? 'active' : ''}" type="button" role="tab" aria-selected="${state.activeCategory === c.id}" data-category="${c.id}"><span>${c.icon}</span>${c.label}</button>`).join(''); }
@@ -350,11 +414,14 @@ function renderLobbyCategoryDetail(){
   if(!category) return '<section class="provider-page category-detail-page"><div class="empty-state">No games found</div></section>';
   return `<section class="provider-page category-detail-page"><header class="provider-page-nav"><button id="categoryDetailBack" class="provider-back" type="button" aria-label="Back to Casino Lobby">‹</button><h1>${category.title}</h1><span aria-hidden="true"></span></header>${category.games.length ? `<div class="game-grid">${category.games.map(game=>gameCard(game, category.cardType || '', Boolean(category.showPlaying))).join('')}</div>` : '<div class="empty-state">No games found</div>'}</section>`;
 }
+function renderBaccaratRoadPicksPage(){
+  return `<section class="provider-page baccarat-road-picks-page"><header class="provider-page-nav"><button id="baccaratRoadPicksBack" class="provider-back" type="button" aria-label="Back to Casino Lobby">‹</button><h1>Baccarat Road Picks</h1><span aria-hidden="true"></span></header><p class="baccarat-road-page-subtitle">More live table patterns to help you find your next seat.</p><div class="baccarat-road-list">${baccaratRoads.map(road=>roadCard(road,true)).join('')}</div></section>`;
+}
 function renderLobby(){ const results = isSearchMode() ? globalGameSearch() : null; if(results) return `<section class="section search-results-page"><div class="category-head"><div><h1 class="section-title">Search Results</h1><p class="section-subtitle">${results.length} matching games</p></div></div>${results.length ? `<div class="game-grid">${sorted(results).map(g => gameCard(g)).join('')}</div>` : '<div class="empty-state">No games found</div>'}</section>`;
   const lobbySection=category=>section(category.title,category.subtitle,category.homeGames,category.cardType || '',category.icon,Boolean(category.showPlaying),category.id);
-  return `${userHasHistory ? lobbySection(lobbyDetailCategories.recommended) : ''}${lobbySection(lobbyDetailCategories.trending)}${latestWinsSection()}${lobbySection(lobbyDetailCategories.released)}<section class="section"><div class="section-head"><div><h2 class="section-title"><span>◈</span>Baccarat Road Picks</h2><p class="section-subtitle">Follow a table pattern before you sit down</p></div></div><div class="baccarat-rail">${baccaratRoads.map(roadCard).join('')}</div></section><section class="section vip-lounge"><div class="vip-head"><div><p class="vip-kicker">✦ PRIVATE TABLES</p><h2 class="vip-title">VIP <span>Lounge</span></h2><p class="vip-sub">Curated premium live games</p></div><span class="vip-status">PREMIUM</span></div><div class="vip-rail">${vipGames.map(g => `<button class="vip-card" data-game-id="${g.id}" type="button" aria-label="Open ${g.name}"><div class="vip-cover" style="--vip-cover:${g.vipCover}"><span class="vip-tag">${g.vipTag}</span><b>${g.vipSymbol}</b></div><div class="vip-card-info"><strong>${g.name}</strong><span>${g.provider}</span></div></button>`).join('')}</div></section>${lobbySection(lobbyDetailCategories.slots)}${lobbySection(lobbyDetailCategories.live)}${lobbySection(lobbyDetailCategories.fishing)}${lobbySection(lobbyDetailCategories.poker)}`; }
+  return `${userHasHistory ? lobbySection(lobbyDetailCategories.recommended) : ''}${lobbySection(lobbyDetailCategories.trending)}${latestWinsSection()}${lobbySection(lobbyDetailCategories.released)}<section class="section"><div class="section-head"><div><h2 class="section-title"><span>◈</span>Baccarat Road Picks</h2><p class="section-subtitle">Follow a table pattern before you sit down</p></div><button class="view-all" type="button" data-baccarat-road-picks>View All ›</button></div><div class="baccarat-rail">${baccaratRoads.slice(0,LOBBY_BACCARAT_ROAD_LIMIT).map(roadCard).join('')}</div></section><section class="section vip-lounge"><div class="vip-head"><div><p class="vip-kicker">✦ PRIVATE TABLES</p><h2 class="vip-title">VIP <span>Lounge</span></h2><p class="vip-sub">Curated premium live games</p></div><span class="vip-status">PREMIUM</span></div><div class="vip-rail">${vipGames.map(g => `<button class="vip-card" data-game-id="${g.id}" type="button" aria-label="Open ${g.name}"><div class="vip-cover" style="--vip-cover:${g.vipCover}"><span class="vip-tag">${g.vipTag}</span></div><div class="vip-card-info"><span class="vip-min-bet">From <b>${g.minBet} USDT</b></span></div></button>`).join('')}</div></section>${lobbySection(lobbyDetailCategories.slots)}${lobbySection(lobbyDetailCategories.live)}${lobbySection(lobbyDetailCategories.fishing)}${lobbySection(lobbyDetailCategories.poker)}`; }
 function renderCategory(){ let games = sorted(filtered(categoryGames())); const liveChips = state.activeCategory === 'live' ? `<div class="chip-row">${['All','Baccarat','Roulette','Blackjack','Game Shows'].map(s => `<button class="sub-chip ${state.activeSub===s?'active':''}" data-sub="${s}" type="button">${s}</button>`).join('')}</div>` : ''; return `<section class="section category-page">${liveChips}${games.length ? `<div class="game-grid">${games.map(g => gameCard(g, state.activeCategory === 'live' ? 'live-card' : '')).join('')}</div>` : '<div class="empty-state">No games match these filters. Clear filters to restore the full category.</div>'}</section>`; }
-function render(){ const isCasinoView=state.currentView==='casino'; const isGamePlay=state.currentView==='gamePlay'; const isFullscreenGame=isGamePlay&&state.gamePlayMode==='fullscreen'; const searchMode=isCasinoView&&isSearchMode(); const isCategory=isCasinoView&&state.activeCategory!=='lobby'; if(gamePlayInteractionCleanup)gamePlayInteractionCleanup(); cancelLatestWinsShift(); renderNav(); discoveryControls.hidden=!isCasinoView; bannerCarousel.hidden=!isCasinoView; nav.hidden=searchMode; document.querySelector('#providersEntry').hidden=searchMode; topHeader.hidden=isFullscreenGame; bottomNav.hidden=isFullscreenGame; appShell.classList.toggle('is-game-play-windowed',isGamePlay&&!isFullscreenGame); appShell.classList.toggle('is-game-play-fullscreen',isGamePlay); document.body.classList.toggle('is-game-play-active',isGamePlay); discoveryControls.classList.toggle('is-category',isCategory&&!searchMode); discoveryControls.classList.toggle('is-search-mode',searchMode); document.querySelector('#openFilter').classList.toggle('is-active',isCategory && Object.keys(state.filters).length > 0); document.querySelector('.toolbar-sort').classList.toggle('is-active',isCategory && state.sort !== 'Popular'); document.querySelector('#sortSelect').value=''; content.innerHTML=isGamePlay?renderGamePlay():state.currentView==='gameDetail'?renderGameDetail():state.currentView==='providers'?renderProviderList():state.currentView==='providerGames'?renderProviderGames():state.currentView==='categoryDetail'?renderLobbyCategoryDetail():isCategory&&!searchMode?renderCategory():renderLobby(); observeShimmers(); observeGameCards(); if(isGamePlay)setupGamePlayInteractions(); }
+function render(){ const isCasinoView=state.currentView==='casino'; const isGamePlay=state.currentView==='gamePlay'; const isFullscreenGame=isGamePlay&&state.gamePlayMode==='fullscreen'; const searchMode=isCasinoView&&isSearchMode(); const isCategory=isCasinoView&&state.activeCategory!=='lobby'; if(gamePlayInteractionCleanup)gamePlayInteractionCleanup(); cancelLatestWinsShift(); renderNav(); discoveryControls.hidden=!isCasinoView; bannerCarousel.hidden=!isCasinoView; nav.hidden=searchMode; document.querySelector('#providersEntry').hidden=searchMode; topHeader.hidden=isFullscreenGame; bottomNav.hidden=isFullscreenGame; appShell.classList.toggle('is-game-play-windowed',isGamePlay&&!isFullscreenGame); appShell.classList.toggle('is-game-play-fullscreen',isGamePlay); document.body.classList.toggle('is-game-play-active',isGamePlay); discoveryControls.classList.toggle('is-category',isCategory&&!searchMode); discoveryControls.classList.toggle('is-search-mode',searchMode); document.querySelector('#openFilter').classList.toggle('is-active',isCategory && Object.keys(state.filters).length > 0); document.querySelector('.toolbar-sort').classList.toggle('is-active',isCategory && state.sort !== 'Popular'); document.querySelector('#sortSelect').value=''; content.innerHTML=isGamePlay?renderGamePlay():state.currentView==='gameDetail'?renderGameDetail():state.currentView==='providers'?renderProviderList():state.currentView==='providerGames'?renderProviderGames():state.currentView==='categoryDetail'?renderLobbyCategoryDetail():state.currentView==='baccaratRoadPicks'?renderBaccaratRoadPicksPage():isCategory&&!searchMode?renderCategory():renderLobby(); observeShimmers(); observeGameCards(); if(isGamePlay){clearBigWinMarquee({clearQueue:true});setupGamePlayInteractions();}else processBigWinQueue(); }
 
 function setupGamePlayInteractions(){
   const view=document.querySelector('.game-play-view'); const zone=document.querySelector('.game-play-control-zone'); const wrap=document.querySelector('#gamePlayControlWrap'); const button=document.querySelector('#gamePlayControl'); const panel=document.querySelector('#gamePlayPanel');
@@ -390,6 +457,7 @@ function shareCurrentGame(action){ const game=findGame(state.activeGame); const 
 function applySheet(){ const chosen = {}; filterConfig().forEach(g => { const input = document.querySelector(`input[name="${g.key}"]:checked`); if(input) chosen[g.key]=input.value; }); state.filters=chosen; closeSheet(); render(); showToast('Filters applied'); }
 function setupEvents(){
   bannerCarousel.addEventListener('click',event=>{ const cta=event.target.closest('[data-banner-target]'); if(!cta)return; showToast(`${cta.dataset.bannerTarget} · prototype action`); resetBannerProgress(); scheduleBannerAutoplay(); });
+  bigWinMarquee.addEventListener('click',()=>{ const gameId=bigWinMarquee.dataset.gameId; clearBigWinMarquee(); if(gameId)openGameDetail(gameId); });
   nav.addEventListener('click',e => { const b=e.target.closest('[data-category]'); if(!b)return; state.activeCategory=b.dataset.category; state.activeSub='All'; state.filters={}; state.sort='Popular'; state.lobbyDetailCategory=null; render(); window.scrollTo({top:0,behavior:'smooth'}); });
   searchInput.addEventListener('input',e => { state.search=e.target.value; clearSearch.classList.toggle('visible',!!state.search); render(); }); clearSearch.addEventListener('click',()=>{searchInput.value='';state.search='';clearSearch.classList.remove('visible');render();searchInput.focus();});
   document.querySelector('#providersEntry')?.addEventListener('click',()=>{state.currentView='providers';state.activeProvider=null;state.providerSearch='';render();window.scrollTo({top:0,behavior:'smooth'});});
@@ -406,6 +474,9 @@ function setupEvents(){
     if(detailProvider){openProviderGames(detailProvider.dataset.detailProvider);state.gameDetailStack=[];return;}
     const lobbyDetail=e.target.closest('[data-lobby-detail]');
     if(lobbyDetail){state.lobbyDetailCategory=lobbyDetail.dataset.lobbyDetail;state.currentView='categoryDetail';render();window.scrollTo({top:0,behavior:'smooth'});return;}
+    if(e.target.closest('[data-baccarat-road-picks]')){state.currentView='baccaratRoadPicks';render();window.scrollTo({top:0,behavior:'smooth'});return;}
+    const roadPick=e.target.closest('[data-road-game-id]');
+    if(roadPick){openGameDetail(roadPick.dataset.roadGameId);return;}
     const game=e.target.closest('[data-game-id]');
     if(game){openGameDetail(game.dataset.gameId);return;}
     const provider=e.target.closest('[data-provider-id]');
@@ -413,6 +484,7 @@ function setupEvents(){
     if(e.target.closest('#providerGamesBack')){state.currentView='providers';render();window.scrollTo({top:0,behavior:'smooth'});return;}
     if(e.target.closest('#providerBack')){state.currentView='casino';render();window.scrollTo({top:0,behavior:'smooth'});return;}
     if(e.target.closest('#categoryDetailBack')){state.currentView='casino';state.lobbyDetailCategory=null;render();window.scrollTo({top:0,behavior:'smooth'});return;}
+    if(e.target.closest('#baccaratRoadPicksBack')){state.currentView='casino';render();window.scrollTo({top:0,behavior:'smooth'});return;}
     const providerGameType=e.target.closest('[data-provider-game-type]');if(providerGameType){state.providerGameType=providerGameType.dataset.providerGameType;render();return;}
     const sub=e.target.closest('[data-sub]');if(sub){state.activeSub=sub.dataset.sub;render();return;}
   });
@@ -420,7 +492,7 @@ function setupEvents(){
   document.querySelector('#openFilter').addEventListener('click',openSheet); document.querySelector('#sortSelect').addEventListener('change',e=>{if(!e.target.value)return;state.sort=e.target.value;render();showToast(`Sorted by ${state.sort}`);}); document.querySelector('#closeSheet').addEventListener('click',closeSheet); backdrop.addEventListener('click',closeSheet); document.querySelector('#applyFilters').addEventListener('click',applySheet); document.querySelector('#clearFilters').addEventListener('click',()=>{state.filters={};state.activeSub='All';closeSheet();render();showToast('Filters cleared');});
   document.querySelector('#closeShareSheet').addEventListener('click',closeShareSheet); shareBackdrop.addEventListener('click',closeShareSheet); shareSheet.addEventListener('click',e=>{const option=e.target.closest('[data-share-action]');if(option)shareCurrentGame(option.dataset.shareAction);});
   document.addEventListener('click',e=>{const b=e.target.closest('[data-feedback]');if(b)showToast(`${b.dataset.feedback} · prototype action`);}); document.addEventListener('keydown',e=>{if(e.key==='Escape'&&sheet.classList.contains('open'))closeSheet();if(e.key==='Escape'&&shareSheet.classList.contains('open'))closeShareSheet();});
-  document.addEventListener('visibilitychange',()=>{ syncLatestWinsRail(); resetBannerAutoplayForVisibility(); });
+  document.addEventListener('visibilitychange',()=>{ syncLatestWinsRail(); resetBannerAutoplayForVisibility(); handleBigWinVisibility(); });
 }
 function startJackpot(){ let amount=42680.38; const feeds=[...document.querySelectorAll('.jackpot-feed-text')], amountEls=[...document.querySelectorAll('.jackpot-amount-value')]; const tick=()=>{const add=[.12,.86,1.40,2.14,5.30][Math.floor(Math.random()*5)];amount+=add;amountEls.forEach(amountEl=>{amountEl.textContent=amount.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});amountEl.classList.remove('amount-bump');void amountEl.offsetWidth;amountEl.classList.add('amount-bump');});feeds.forEach(feed=>{feed.textContent=`✦ +${add.toFixed(2)} USDT added to the Jackpot`;feed.classList.remove('feed-pop');void feed.offsetWidth;feed.classList.add('feed-pop');});setTimeout(tick,4000+Math.floor(Math.random()*4001));};setTimeout(tick,5000);}
 renderCasinoBanners();seedLatestWins();setupEvents();render();startJackpot();scheduleWinEvent();

@@ -9,13 +9,15 @@
     <link rel="stylesheet" href="./styles.css" />
     <link rel="stylesheet" href="./toolbar.css" />
     <link rel="stylesheet" href="./win-feed.css" />
-    <link rel="stylesheet" href="./card-density.css" />
+    <link rel="stylesheet" href="./card-density.css?v=compact-rail-3" />
     <link rel="stylesheet" href="./game-covers.css?v=real-game-covers-2" />
     <link rel="stylesheet" href="./provider-flow.css?v=provider-game-filter-1" />
   <link rel="stylesheet" href="./game-detail.css?v=provider-identity-3" />
     <link rel="stylesheet" href="./game-play.css" />
     <link rel="stylesheet" href="./game-play-icons.css" />
     <link rel="stylesheet" href="./banner-carousel.css?v=casino-banner-carousel-1" />
+    <link rel="stylesheet" href="./baccarat-road-picks.css?v=road-picks-page-1" />
+    <link rel="stylesheet" href="./big-win-marquee.css?v=big-win-marquee-1" />
   </head>
   <body>
     <main class="app-shell" aria-label="WillBet Casino mobile prototype">
@@ -28,6 +30,8 @@
           <button class="avatar" type="button" data-feedback="Profile"><span>W</span></button>
         </div>
       </header>
+
+      <button id="bigWinMarquee" class="big-win-marquee" type="button" hidden></button>
 
       <section id="casinoBannerCarousel" class="casino-banner-carousel" aria-label="Casino banners">
         <div id="casinoBannerTrack" class="casino-banner-track"></div>
@@ -78,6 +82,6 @@
     </aside>
 
     <div id="launchToast" class="launch-toast" role="status" aria-live="polite"></div>
-    <script src="./app.js?v=casino-banner-carousel-2"></script>
+    <script src="./app.js?v=big-win-marquee-1"></script>
   </body>
 </html>

@@ -1,0 +1,86 @@
+/* Temporary, event-driven Big Win notification. It never reserves page space. */
+.big-win-marquee {
+  position: fixed;
+  z-index: 25;
+  top: 82px;
+  left: 50%;
+  display: flex;
+  width: min(calc(100% - 28px),347px);
+  min-height: 44px;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  padding: 8px 11px;
+  border: 1px solid #8d66b8;
+  border-radius: 13px;
+  background: linear-gradient(105deg,#171326f5,#25173af5 66%,#171526f5);
+  box-shadow: 0 10px 26px #0009, inset 0 1px #ffffff18;
+  color: #f4eef8;
+  text-align: left;
+  transform: translate3d(calc(-50% + 115vw),0,0);
+  opacity: 0;
+  transition: transform .5s cubic-bezier(.2,.8,.25,1), opacity .35s ease;
+}
+
+.big-win-marquee.is-visible {
+  transform: translate3d(-50%,0,0);
+  opacity: 1;
+}
+
+.big-win-marquee.is-exiting {
+  transform: translate3d(calc(-50% - 115vw),0,0);
+  opacity: 0;
+}
+
+.big-win-icon {
+  display: grid;
+  width: 23px;
+  height: 23px;
+  flex: 0 0 23px;
+  place-items: center;
+  border: 1px solid #e0b7638c;
+  border-radius: 8px;
+  background: #3b2a1a;
+  color: #f2cd7f;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.big-win-copy {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+}
+
+.big-win-copy b {
+  color: #e7d6f7;
+}
+
+.big-win-copy strong {
+  color: #f1c875;
+  font-weight: 900;
+}
+
+.big-win-copy em {
+  color: #cfa4fb;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.big-win-arrow {
+  color: #c8a3eb;
+  font-size: 22px;
+  line-height: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .big-win-marquee,
+  .big-win-marquee.is-visible,
+  .big-win-marquee.is-exiting {
+    transform: translate3d(-50%,0,0);
+    transition-property: opacity;
+  }
+}

@@ -1,6 +1,6 @@
 :root {
-  --game-card-width: clamp(103px, 28.54vw, 107px);
-  --lobby-card-gap: 3px;
+  --game-card-width: clamp(107px, 29.6vw, 111px);
+  --lobby-card-gap: 0px;
   --category-card-gap: 6px;
 }
 
