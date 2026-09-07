@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="./game-detail.css?v=provider-identity-3" />
     <link rel="stylesheet" href="./game-play.css" />
     <link rel="stylesheet" href="./game-play-icons.css" />
+    <link rel="stylesheet" href="./banner-carousel.css?v=casino-banner-carousel-1" />
   </head>
   <body>
     <main class="app-shell" aria-label="WillBet Casino mobile prototype">
@@ -28,15 +29,9 @@
         </div>
       </header>
 
-      <section class="jackpot" aria-label="WillBet Casino Jackpot">
-        <div class="jackpot-art" aria-hidden="true"></div>
-        <div class="jackpot-copy">
-          <p class="eyebrow">✦ WILLBET CASINO JACKPOT</p>
-          <p class="jackpot-amount"><span id="jackpotAmount">42,680.38</span> <small>USDT</small></p>
-          <p class="jackpot-subtitle">Every Bet Builds the Pot</p>
-          <p class="jackpot-timer">◉ Weekly Jackpot <b>·</b> 02D 13H 42M</p>
-        </div>
-        <div class="jackpot-feed" id="jackpotFeed" aria-live="polite">✦ +2.14 USDT added to the Jackpot</div>
+      <section id="casinoBannerCarousel" class="casino-banner-carousel" aria-label="Casino banners">
+        <div id="casinoBannerTrack" class="casino-banner-track"></div>
+        <div id="casinoBannerProgress" class="casino-banner-progress" aria-label="Banner progress"></div>
       </section>
 
       <section class="discovery-controls" aria-label="Casino search and categories">
@@ -83,6 +78,6 @@
     </aside>
 
     <div id="launchToast" class="launch-toast" role="status" aria-live="polite"></div>
-    <script src="./app.js?v=road-picks-covers-1"></script>
+    <script src="./app.js?v=casino-banner-carousel-2"></script>
   </body>
 </html>

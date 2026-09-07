@@ -1,0 +1,90 @@
+.casino-banner-carousel {
+  position: relative;
+  min-height: 184px;
+  overflow: hidden;
+  margin: 0;
+  border: 1px solid #3e2853;
+  border-radius: 18px;
+  background: #100b1d;
+  box-shadow: inset 0 0 32px #4a17721c;
+}
+
+.casino-banner-track {
+  display: flex;
+  width: 100%;
+  min-height: 184px;
+  transform: translate3d(0, 0, 0);
+  transition: transform 420ms ease-out;
+}
+
+.casino-banner-track.is-resetting { transition: none; }
+
+.casino-banner-slide {
+  position: relative;
+  flex: 0 0 100%;
+  width: 100%;
+  min-height: 184px;
+  overflow: hidden;
+}
+
+.casino-banner-slide .jackpot {
+  min-height: 184px;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.promo-banner {
+  display: flex;
+  align-items: flex-end;
+  padding: 17px 15px 19px;
+  background: linear-gradient(90deg, #0a0812f5 0%, #0d0812d9 47%, #0b081094 100%), var(--banner-image) center / cover no-repeat;
+}
+
+.promo-banner::after {
+  position: absolute;
+  inset: 0;
+  border: 1px solid #ffffff0a;
+  border-radius: inherit;
+  pointer-events: none;
+  content: '';
+}
+
+.promo-banner-copy { position: relative; z-index: 1; max-width: 72%; }
+.promo-banner-kicker { margin: 0 0 6px; color: #d9b66a; font-size: 9px; font-weight: 900; letter-spacing: .75px; }
+.promo-banner h2 { margin: 0; color: #faf5ff; font-size: 24px; line-height: 1; letter-spacing: -.7px; }
+.promo-banner p { margin: 7px 0 12px; color: #d2c8dc; font-size: 11px; line-height: 1.3; }
+.promo-banner-cta { min-height: 29px; padding: 0 11px; border: 1px solid #c589ff9e; border-radius: 9px; background: linear-gradient(90deg, #783abc, #a864df); color: #fff; font-size: 10px; font-weight: 850; }
+
+.casino-banner-progress {
+  position: absolute;
+  z-index: 4;
+  right: 12px;
+  bottom: 11px;
+  display: flex;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.banner-segment {
+  width: 18px;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #d9d0e51f;
+}
+
+.banner-segment i {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #a254de, #d7a2ff);
+}
+
+.banner-segment.is-active i { width: 100%; transition: width var(--banner-progress-duration, 5000ms) linear; }
+
+@media (prefers-reduced-motion: reduce) {
+  .casino-banner-track { transition: none; }
+  .banner-segment.is-active i { transition: none; width: 100%; }
+}

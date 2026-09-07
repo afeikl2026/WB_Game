@@ -10,6 +10,13 @@ const WIN_FEED_CONFIG = {
   maxLatestWins: 16
 };
 const GAME_PLAY_IMAGE = './assets/game-play/wanted-dead-or-a-wild-duel-intro.png';
+const BANNER_AUTOPLAY_DURATION = 5000;
+const CASINO_BANNERS = Object.freeze([
+  { id:'casino-jackpot', type:'jackpot', enabled:true, order:1 },
+  { id:'vip-live-tournament', type:'tournament', image:'./assets/game-covers/real/6c39ea6653.avif', kicker:'LIVE EXCLUSIVE', title:'VIP Live Tournament', subtitle:'Exclusive tables · Bigger rewards', ctaText:'Join Now', target:'VIP tournament', enabled:true, order:2 },
+  { id:'weekend-cashback', type:'promotion', image:'./assets/game-covers/real/8fe55e9099.avif', kicker:'WEEKEND REWARD', title:'Weekend Cashback', subtitle:'Play more · Get more back', ctaText:'View Promotion', target:'Weekend Cashback', enabled:true, order:3 },
+  { id:'new-games-festival', type:'vip', image:'./assets/game-covers/real/75da044051.avif', kicker:'JUST LANDED', title:'New Games Festival', subtitle:'Fresh releases · More ways to win', ctaText:'Play Now', target:'New Games Festival', enabled:true, order:4 }
+]);
 
 const categories = [
   { id: 'lobby', label: 'Lobby', icon: '⌂' }, { id: 'live', label: 'Live Casino', icon: '♙' },
@@ -138,7 +145,9 @@ const bottomNav = document.querySelector('.bottom-nav');
 const content = document.querySelector('#pageContent');
 const nav = document.querySelector('#categoryNav');
 const discoveryControls = document.querySelector('.discovery-controls');
-const jackpot = document.querySelector('.jackpot');
+const bannerCarousel = document.querySelector('#casinoBannerCarousel');
+const bannerTrack = document.querySelector('#casinoBannerTrack');
+const bannerProgress = document.querySelector('#casinoBannerProgress');
 const searchInput = document.querySelector('#searchInput');
 const clearSearch = document.querySelector('#clearSearch');
 const sheet = document.querySelector('#filterSheet');
@@ -162,6 +171,9 @@ let latestWinsShiftTimer;
 let latestWinsShiftToken = 0;
 const latestWinsShiftQueue = [];
 let gamePlayInteractionCleanup;
+let activeBannerIndex = 0;
+let bannerAutoplayTimer;
+let bannerResetTimer;
 
 const badge = (game, type, label) => `<span class="badge ${type} shine-target" data-badge-key="${game.id}-${type}">${label}</span>`;
 const gameCard = (game, type = '', showPlaying = false) => `<button class="game-card ${type}" type="button" data-game-id="${game.id}" aria-label="Play ${game.name} by ${game.provider}">
@@ -169,6 +181,47 @@ const gameCard = (game, type = '', showPlaying = false) => `<button class="game-
   ${showPlaying ? `<div class="game-meta"><div class="play-count">${game.playing > 999 ? `${(game.playing / 1000).toFixed(1)}K Playing` : `${game.playsToday} Plays Today`}</div></div>` : ''}</button>`;
 const section = (title, subtitle, games, type = '', icon = '✦', showPlaying = false, lobbyDetailId = '') => `<section class="section"><div class="section-head"><div><h2 class="section-title"><span>${icon}</span>${title}</h2>${subtitle ? `<p class="section-subtitle">${subtitle}</p>` : ''}</div>${lobbyDetailId ? `<button class="view-all" type="button" data-lobby-detail="${lobbyDetailId}">View All ›</button>` : ''}</div><div class="h-scroll">${games.map(g => gameCard(g, type, showPlaying)).join('')}</div></section>`;
 const roadCard = road => { const cover=road.cover ? `url('${road.cover}') center/cover no-repeat` : STATIC_GAME_COVER_FALLBACK; let cells = ''; road.road.forEach((col, c) => col.forEach((outcome, r) => { cells += `<span class="road-cell" style="grid-column:${c + 1};grid-row:${r + 1}"><i class="road-dot ${outcome}"></i></span>`; })); return `<article class="baccarat-road-card"><div class="road-info" style="--road-cover:${cover}"><span class="dealer-chip">LIVE DEALER</span><p class="road-pattern">${road.pattern}</p></div><div class="road-map" aria-label="${road.pattern} baccarat road map">${cells}</div></article>`; };
+
+const activeCasinoBanners = () => CASINO_BANNERS.filter(banner => banner.enabled).sort((a,banner) => a.order - banner.order);
+const jackpotBanner = isClone => `<section class="jackpot" aria-label="WillBet Casino Jackpot"><div class="jackpot-art" aria-hidden="true"></div><div class="jackpot-copy"><p class="eyebrow">✦ WILLBET CASINO JACKPOT</p><p class="jackpot-amount"><span class="jackpot-amount-value" ${isClone ? '' : 'id="jackpotAmount"'}>42,680.38</span> <small>USDT</small></p><p class="jackpot-subtitle">Every Bet Builds the Pot</p><p class="jackpot-timer">◉ Weekly Jackpot <b>·</b> 02D 13H 42M</p></div><div class="jackpot-feed jackpot-feed-text" ${isClone ? '' : 'id="jackpotFeed"'} aria-live="polite">✦ +2.14 USDT added to the Jackpot</div></section>`;
+const promotionBanner = banner => `<article class="promo-banner" style="--banner-image:url('${banner.image}')" aria-label="${banner.title}"><div class="promo-banner-copy"><span class="promo-banner-kicker">✦ ${banner.kicker}</span><h2>${banner.title}</h2><p>${banner.subtitle}</p>${banner.ctaText ? `<button class="promo-banner-cta" type="button" data-banner-target="${banner.target}">${banner.ctaText}</button>` : ''}</div></article>`;
+const bannerSlide = (banner,isClone=false) => `<div class="casino-banner-slide" data-banner-id="${banner.id}">${banner.type === 'jackpot' ? jackpotBanner(isClone) : promotionBanner(banner)}</div>`;
+
+function resetBannerProgress(){
+  bannerProgress.innerHTML = activeCasinoBanners().map((banner,index) => `<span class="banner-segment" data-banner-index="${index}" aria-label="Banner ${index + 1} of ${activeCasinoBanners().length}"><i></i></span>`).join('');
+  requestAnimationFrame(() => { const segment=bannerProgress.querySelector(`[data-banner-index="${activeBannerIndex}"]`); if(segment){ segment.style.setProperty('--banner-progress-duration', `${BANNER_AUTOPLAY_DURATION}ms`); segment.classList.add('is-active'); } });
+}
+function scheduleBannerAutoplay(){
+  clearTimeout(bannerAutoplayTimer);
+  if(document.hidden || activeCasinoBanners().length < 2) return;
+  bannerAutoplayTimer = setTimeout(advanceCasinoBanner, BANNER_AUTOPLAY_DURATION);
+}
+function advanceCasinoBanner(){
+  const banners = activeCasinoBanners();
+  if(banners.length < 2) return;
+  const isLoop = activeBannerIndex === banners.length - 1;
+  const nextVisualIndex = isLoop ? banners.length : activeBannerIndex + 1;
+  activeBannerIndex = isLoop ? 0 : activeBannerIndex + 1;
+  bannerTrack.style.transform = `translate3d(-${nextVisualIndex * 100}%,0,0)`;
+  resetBannerProgress();
+  scheduleBannerAutoplay();
+  if(isLoop){
+    clearTimeout(bannerResetTimer);
+    bannerResetTimer = setTimeout(() => { bannerTrack.classList.add('is-resetting'); bannerTrack.style.transform='translate3d(0,0,0)'; requestAnimationFrame(() => bannerTrack.classList.remove('is-resetting')); }, 430);
+  }
+}
+function renderCasinoBanners(){
+  const banners = activeCasinoBanners();
+  activeBannerIndex = 0;
+  bannerTrack.innerHTML = banners.map(bannerSlide).join('') + (banners.length > 1 ? bannerSlide(banners[0],true) : '');
+  bannerTrack.style.transform='translate3d(0,0,0)';
+  resetBannerProgress();
+  scheduleBannerAutoplay();
+}
+function resetBannerAutoplayForVisibility(){
+  clearTimeout(bannerAutoplayTimer);
+  if(!document.hidden){ resetBannerProgress(); scheduleBannerAutoplay(); }
+}
 
 const formatWinAmount = event => `+${event.amount.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} ${event.currency}`;
 const winGame = event => vipGames.find(g => g.id === event.gameId && g.name === event.gameName) || allGames.find(g => g.id === event.gameId) || vipGames.find(g => g.id === event.gameId);
@@ -301,7 +354,7 @@ function renderLobby(){ const results = isSearchMode() ? globalGameSearch() : nu
   const lobbySection=category=>section(category.title,category.subtitle,category.homeGames,category.cardType || '',category.icon,Boolean(category.showPlaying),category.id);
   return `${userHasHistory ? lobbySection(lobbyDetailCategories.recommended) : ''}${lobbySection(lobbyDetailCategories.trending)}${latestWinsSection()}${lobbySection(lobbyDetailCategories.released)}<section class="section"><div class="section-head"><div><h2 class="section-title"><span>◈</span>Baccarat Road Picks</h2><p class="section-subtitle">Follow a table pattern before you sit down</p></div></div><div class="baccarat-rail">${baccaratRoads.map(roadCard).join('')}</div></section><section class="section vip-lounge"><div class="vip-head"><div><p class="vip-kicker">✦ PRIVATE TABLES</p><h2 class="vip-title">VIP <span>Lounge</span></h2><p class="vip-sub">Curated premium live games</p></div><span class="vip-status">PREMIUM</span></div><div class="vip-rail">${vipGames.map(g => `<button class="vip-card" data-game-id="${g.id}" type="button" aria-label="Open ${g.name}"><div class="vip-cover" style="--vip-cover:${g.vipCover}"><span class="vip-tag">${g.vipTag}</span><b>${g.vipSymbol}</b></div><div class="vip-card-info"><strong>${g.name}</strong><span>${g.provider}</span></div></button>`).join('')}</div></section>${lobbySection(lobbyDetailCategories.slots)}${lobbySection(lobbyDetailCategories.live)}${lobbySection(lobbyDetailCategories.fishing)}${lobbySection(lobbyDetailCategories.poker)}`; }
 function renderCategory(){ let games = sorted(filtered(categoryGames())); const liveChips = state.activeCategory === 'live' ? `<div class="chip-row">${['All','Baccarat','Roulette','Blackjack','Game Shows'].map(s => `<button class="sub-chip ${state.activeSub===s?'active':''}" data-sub="${s}" type="button">${s}</button>`).join('')}</div>` : ''; return `<section class="section category-page">${liveChips}${games.length ? `<div class="game-grid">${games.map(g => gameCard(g, state.activeCategory === 'live' ? 'live-card' : '')).join('')}</div>` : '<div class="empty-state">No games match these filters. Clear filters to restore the full category.</div>'}</section>`; }
-function render(){ const isCasinoView=state.currentView==='casino'; const isGamePlay=state.currentView==='gamePlay'; const isFullscreenGame=isGamePlay&&state.gamePlayMode==='fullscreen'; const searchMode=isCasinoView&&isSearchMode(); const isCategory=isCasinoView&&state.activeCategory!=='lobby'; if(gamePlayInteractionCleanup)gamePlayInteractionCleanup(); cancelLatestWinsShift(); renderNav(); discoveryControls.hidden=!isCasinoView; jackpot.hidden=!isCasinoView; nav.hidden=searchMode; document.querySelector('#providersEntry').hidden=searchMode; topHeader.hidden=isFullscreenGame; bottomNav.hidden=isFullscreenGame; appShell.classList.toggle('is-game-play-windowed',isGamePlay&&!isFullscreenGame); appShell.classList.toggle('is-game-play-fullscreen',isFullscreenGame); document.body.classList.toggle('is-game-play-active',isGamePlay); discoveryControls.classList.toggle('is-category',isCategory&&!searchMode); discoveryControls.classList.toggle('is-search-mode',searchMode); document.querySelector('#openFilter').classList.toggle('is-active',isCategory && Object.keys(state.filters).length > 0); document.querySelector('.toolbar-sort').classList.toggle('is-active',isCategory && state.sort !== 'Popular'); document.querySelector('#sortSelect').value=''; content.innerHTML=isGamePlay?renderGamePlay():state.currentView==='gameDetail'?renderGameDetail():state.currentView==='providers'?renderProviderList():state.currentView==='providerGames'?renderProviderGames():state.currentView==='categoryDetail'?renderLobbyCategoryDetail():isCategory&&!searchMode?renderCategory():renderLobby(); observeShimmers(); observeGameCards(); if(isGamePlay)setupGamePlayInteractions(); }
+function render(){ const isCasinoView=state.currentView==='casino'; const isGamePlay=state.currentView==='gamePlay'; const isFullscreenGame=isGamePlay&&state.gamePlayMode==='fullscreen'; const searchMode=isCasinoView&&isSearchMode(); const isCategory=isCasinoView&&state.activeCategory!=='lobby'; if(gamePlayInteractionCleanup)gamePlayInteractionCleanup(); cancelLatestWinsShift(); renderNav(); discoveryControls.hidden=!isCasinoView; bannerCarousel.hidden=!isCasinoView; nav.hidden=searchMode; document.querySelector('#providersEntry').hidden=searchMode; topHeader.hidden=isFullscreenGame; bottomNav.hidden=isFullscreenGame; appShell.classList.toggle('is-game-play-windowed',isGamePlay&&!isFullscreenGame); appShell.classList.toggle('is-game-play-fullscreen',isGamePlay); document.body.classList.toggle('is-game-play-active',isGamePlay); discoveryControls.classList.toggle('is-category',isCategory&&!searchMode); discoveryControls.classList.toggle('is-search-mode',searchMode); document.querySelector('#openFilter').classList.toggle('is-active',isCategory && Object.keys(state.filters).length > 0); document.querySelector('.toolbar-sort').classList.toggle('is-active',isCategory && state.sort !== 'Popular'); document.querySelector('#sortSelect').value=''; content.innerHTML=isGamePlay?renderGamePlay():state.currentView==='gameDetail'?renderGameDetail():state.currentView==='providers'?renderProviderList():state.currentView==='providerGames'?renderProviderGames():state.currentView==='categoryDetail'?renderLobbyCategoryDetail():isCategory&&!searchMode?renderCategory():renderLobby(); observeShimmers(); observeGameCards(); if(isGamePlay)setupGamePlayInteractions(); }
 
 function setupGamePlayInteractions(){
   const view=document.querySelector('.game-play-view'); const zone=document.querySelector('.game-play-control-zone'); const wrap=document.querySelector('#gamePlayControlWrap'); const button=document.querySelector('#gamePlayControl'); const panel=document.querySelector('#gamePlayPanel');
@@ -336,6 +389,7 @@ function closeShareSheet(){ shareSheet.classList.remove('open'); shareSheet.setA
 function shareCurrentGame(action){ const game=findGame(state.activeGame); const link=`${window.location.origin}${window.location.pathname}?game=${encodeURIComponent(game?.id||'')}`; if(action==='copy')navigator.clipboard?.writeText(link).catch(()=>{}); const messages={copy:'Game link copied',telegram:'Telegram share · prototype action',x:'Share to X · prototype action',more:'More share options · prototype action'}; closeShareSheet(); showToast(messages[action]||'Share · prototype action'); }
 function applySheet(){ const chosen = {}; filterConfig().forEach(g => { const input = document.querySelector(`input[name="${g.key}"]:checked`); if(input) chosen[g.key]=input.value; }); state.filters=chosen; closeSheet(); render(); showToast('Filters applied'); }
 function setupEvents(){
+  bannerCarousel.addEventListener('click',event=>{ const cta=event.target.closest('[data-banner-target]'); if(!cta)return; showToast(`${cta.dataset.bannerTarget} · prototype action`); resetBannerProgress(); scheduleBannerAutoplay(); });
   nav.addEventListener('click',e => { const b=e.target.closest('[data-category]'); if(!b)return; state.activeCategory=b.dataset.category; state.activeSub='All'; state.filters={}; state.sort='Popular'; state.lobbyDetailCategory=null; render(); window.scrollTo({top:0,behavior:'smooth'}); });
   searchInput.addEventListener('input',e => { state.search=e.target.value; clearSearch.classList.toggle('visible',!!state.search); render(); }); clearSearch.addEventListener('click',()=>{searchInput.value='';state.search='';clearSearch.classList.remove('visible');render();searchInput.focus();});
   document.querySelector('#providersEntry')?.addEventListener('click',()=>{state.currentView='providers';state.activeProvider=null;state.providerSearch='';render();window.scrollTo({top:0,behavior:'smooth'});});
@@ -366,7 +420,7 @@ function setupEvents(){
   document.querySelector('#openFilter').addEventListener('click',openSheet); document.querySelector('#sortSelect').addEventListener('change',e=>{if(!e.target.value)return;state.sort=e.target.value;render();showToast(`Sorted by ${state.sort}`);}); document.querySelector('#closeSheet').addEventListener('click',closeSheet); backdrop.addEventListener('click',closeSheet); document.querySelector('#applyFilters').addEventListener('click',applySheet); document.querySelector('#clearFilters').addEventListener('click',()=>{state.filters={};state.activeSub='All';closeSheet();render();showToast('Filters cleared');});
   document.querySelector('#closeShareSheet').addEventListener('click',closeShareSheet); shareBackdrop.addEventListener('click',closeShareSheet); shareSheet.addEventListener('click',e=>{const option=e.target.closest('[data-share-action]');if(option)shareCurrentGame(option.dataset.shareAction);});
   document.addEventListener('click',e=>{const b=e.target.closest('[data-feedback]');if(b)showToast(`${b.dataset.feedback} · prototype action`);}); document.addEventListener('keydown',e=>{if(e.key==='Escape'&&sheet.classList.contains('open'))closeSheet();if(e.key==='Escape'&&shareSheet.classList.contains('open'))closeShareSheet();});
-  document.addEventListener('visibilitychange',syncLatestWinsRail);
+  document.addEventListener('visibilitychange',()=>{ syncLatestWinsRail(); resetBannerAutoplayForVisibility(); });
 }
-function startJackpot(){ let amount=42680.38; const feed=document.querySelector('#jackpotFeed'), amountEl=document.querySelector('#jackpotAmount'); const tick=()=>{const add=[.12,.86,1.40,2.14,5.30][Math.floor(Math.random()*5)];amount+=add;amountEl.textContent=amount.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});amountEl.classList.remove('amount-bump');void amountEl.offsetWidth;amountEl.classList.add('amount-bump');feed.textContent=`✦ +${add.toFixed(2)} USDT added to the Jackpot`;feed.classList.remove('feed-pop');void feed.offsetWidth;feed.classList.add('feed-pop');setTimeout(tick,4000+Math.floor(Math.random()*4001));};setTimeout(tick,5000);}
-seedLatestWins();setupEvents();render();startJackpot();scheduleWinEvent();
+function startJackpot(){ let amount=42680.38; const feeds=[...document.querySelectorAll('.jackpot-feed-text')], amountEls=[...document.querySelectorAll('.jackpot-amount-value')]; const tick=()=>{const add=[.12,.86,1.40,2.14,5.30][Math.floor(Math.random()*5)];amount+=add;amountEls.forEach(amountEl=>{amountEl.textContent=amount.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});amountEl.classList.remove('amount-bump');void amountEl.offsetWidth;amountEl.classList.add('amount-bump');});feeds.forEach(feed=>{feed.textContent=`✦ +${add.toFixed(2)} USDT added to the Jackpot`;feed.classList.remove('feed-pop');void feed.offsetWidth;feed.classList.add('feed-pop');});setTimeout(tick,4000+Math.floor(Math.random()*4001));};setTimeout(tick,5000);}
+renderCasinoBanners();seedLatestWins();setupEvents();render();startJackpot();scheduleWinEvent();
