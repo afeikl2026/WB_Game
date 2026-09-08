@@ -1,0 +1,141 @@
+/* VIP Lounge detail: luxury atmosphere lives in the page environment, never in the game cards. */
+.vip-head-actions {
+  align-self: center;
+}
+
+.vip-explore-button {
+  min-height: 30px;
+  padding: 6px 0;
+  color: #f0d28c;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.vip-explore-button:active {
+  color: #fff0bf;
+}
+
+.vip-lounge-page {
+  position: relative;
+  isolation: isolate;
+  margin: 8px 0 25px;
+}
+
+.vip-lounge-page::before {
+  position: absolute;
+  z-index: 0;
+  inset: 34px -14px auto;
+  height: 430px;
+  opacity: .34;
+  background:
+    linear-gradient(180deg,#08091405 0%,#080a13ce 48%,#080a13 88%),
+    url("./assets/vip-lounge/vip-page-bg.png") center top / 100% auto no-repeat;
+  content: "";
+  pointer-events: none;
+}
+
+.vip-lounge-page > * {
+  position: relative;
+  z-index: 1;
+}
+
+.vip-lounge-page-nav {
+  margin-bottom: 10px;
+}
+
+.vip-lounge-page-nav h1 {
+  color: #f4d99a;
+}
+
+.vip-lounge-hero {
+  position: relative;
+  min-height: 166px;
+  overflow: hidden;
+  margin-bottom: 17px;
+  border-radius: 17px;
+  background:
+    linear-gradient(90deg,#0b0912 0%,#110b15e8 45%,#110b1533 100%),
+    url("./assets/vip-lounge/vip-hero-bg.png") 63% center / cover no-repeat;
+  box-shadow: inset 0 1px #f6dc9b1f,0 12px 25px #0005;
+}
+
+.vip-lounge-hero::after {
+  position: absolute;
+  right: -10px;
+  bottom: -20px;
+  width: 39%;
+  aspect-ratio: 1;
+  opacity: .68;
+  background: url("./assets/vip-lounge/vip-diamond-decor.png") right bottom / contain no-repeat;
+  content: "";
+  filter: drop-shadow(0 5px 12px #b273e655);
+  pointer-events: none;
+}
+
+.vip-lounge-hero-copy {
+  position: relative;
+  z-index: 1;
+  width: min(62%,205px);
+  padding: 20px 16px;
+}
+
+.vip-lounge-exclusive {
+  display: inline-flex;
+  align-items: center;
+  min-height: 18px;
+  padding: 3px 6px;
+  border: 1px solid #d4b26a70;
+  border-radius: 99px;
+  color: #f0d185;
+  background: #160f1ab3;
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: .7px;
+}
+
+.vip-lounge-hero h2,
+.vip-lounge-hero p {
+  margin: 0;
+}
+
+.vip-lounge-hero h2 {
+  margin-top: 11px;
+  color: #f7f2fa;
+  font-size: 23px;
+  line-height: 1;
+  letter-spacing: -.7px;
+}
+
+.vip-lounge-hero p {
+  margin-top: 7px;
+  color: #d7c9df;
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.vip-lounge-games-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 1px 11px;
+}
+
+.vip-lounge-games-head h2 {
+  margin: 0;
+  color: #f3edf7;
+  font-size: 16px;
+  letter-spacing: -.3px;
+}
+
+.vip-lounge-games-head span {
+  color: #cdb28a;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+@media (max-width: 359px) {
+  .vip-lounge-hero { min-height: 154px; }
+  .vip-lounge-hero-copy { width: min(66%,195px); padding: 18px 14px; }
+  .vip-lounge-hero h2 { font-size: 21px; }
+}

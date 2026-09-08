@@ -303,19 +303,21 @@
   margin: 13px 0 0;
 }
 
-.detail-tag {
-  padding: 4px 7px;
-  border: 1px solid #503765;
-  border-radius: 7px;
-  background: #2b1d38;
-  color: #dfc3f8;
-  font-size: 8px;
-  font-weight: 900;
-  letter-spacing: .25px;
+.detail-tags .badge {
+  position: relative;
+  top: auto;
+  left: auto;
+  display: inline-block;
 }
 
-.detail-tag.hot { border-color: #773341; background: #3b1b24; color: #ffb2bd; }
-.detail-tag.jackpot { position: static; min-height: 0; overflow: visible; border-color: #6b5930; background: #2b2517; color: #f0ce81; box-shadow: none; }
+/* Detail labels intentionally share the compact list-card badge language. */
+.detail-tags .badge:not(.hot):not(.new) {
+  background: #8045df;
+}
+
+.detail-tags .badge.jackpot {
+  background: #9a7131;
+}
 
 .detail-description {
   margin-top: 13px;
